@@ -1,0 +1,8 @@
+openai==0.27
+tiktoken==0.1.2
+opentrons=6.2.1
+
+pandas
+numpy
+matplotlib
+seaborn

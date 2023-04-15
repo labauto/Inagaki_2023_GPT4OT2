@@ -1,0 +1,22 @@
+/fig/
+.ipynb_checkpoints/
+__pycache__/
+進捗スライド/
+text/
+processed/
+opentrons_scripts/
+
+
+playground.ipynb
+
+/deprecated
+/table
+.DS_Store
+
+
+question_and_answer/archives
+question_and_answer/scripts
+*.zip
+
+question_and_answer/
+# config.py
