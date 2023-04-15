@@ -1,4 +1,4 @@
-# LabCode
+# LabCodeGPT
 
 The official source code for calling OpenAP API and validating the generated Python scripts used in "**_GPT-4 generates robotic scripts from goal-oriented instructions in biological laboratory automation_**".
 
