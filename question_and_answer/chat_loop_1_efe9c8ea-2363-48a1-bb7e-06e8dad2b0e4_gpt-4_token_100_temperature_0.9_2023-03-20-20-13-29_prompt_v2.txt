@@ -1,0 +1,78 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+I understand that you want to write a Python script to control an Opentrons machine for automating a laboratory experiment to exchange hMSC cell culture medium using PBS(-) and D-MEM in a 6 well plate. Please note, you need to have the necessary hardware to perform this experiment.
+
+Before starting, please make sure to install the "opentrons" module in your Python environment using:
+
+```sh
+pip install opentrons
+```
+Here's a Python script to perform the mentioned experiment:
+
+```python
+import opentrons.execute
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'Cell Culture Medium Exchange',
+    'author': 'Your Name',
+    'description': 'Exchanging hMSC cell culture medium using PBS(-) and D-MEM in a 6 well plate.'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Labware Configuration
+    tiprack = protocol.load_labware('opentrons_96_tiprack_300ul', '1')
+    6_well_plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '2')
+    medium_tube = protocol.load_labware('eppendorf_5ml', '3')
+    
+    # Pipette Configuration
+    p300 = protocol.load_instrument('p300_single_gen2', 'right', tip_racks=[tiprack])
+    
+    # Reagent Locations
+    pbs_minus = medium_tube.wells_by_name()['A1']
+    d_meme = medium_tube.wells_by_name()['A2']
+    
+    # Aspirate and Dispense Volumes
+    pbs_aspirate_volume = 1000  # You can adjust this value based on your requirements
+    d_meme_dispense_volume = 1000 # You can adjust this value based on your requirements
+    
+    # Remove Old Media and Add PBS(-)
+    for well in 6_well_plate.wells():
+        p300.pick_up_tip()
+        p300.aspirate(pbs_aspirate_volume, pbs_minus)
+        p300.dispense(pbs_aspirate_volume, well)
+        p300.mix(3, pbs_aspirate_volume//2, well)  # Mix number of times, volume to mix
+        p300.blow_out(well.top())  # Blow air in to push the liquid out
+        p300.aspirate(pbs_aspirate_volume, well)  # Aspirate the mixed liquid
+        p300.dispense(pbs_aspirate_volume, pbs_minus)  # Discard liquid into waste container
+        p300.drop_tip()
+    
+    # Add D-MEM
+    for well in 6_well_plate.wells():
+        p300.pick_up_tip()
+        p300.aspirate(d_meme_dispense_volume, d_meme)
+        p300.dispense(d_meme_dispense_volume, well)
+        p300.drop_tip()
+```
+
+Please note, you might need to adapt the code to the specific hardware configuration you're working with - this includes IDs of labware (e.g., 'opentrons_96_tiprack_300ul', 'corning_6_wellplate_16.8ml_flat', 'eppendorf_5ml') and the position of each device on the deck. Make sure to follow the documentation for your specific hardware, which can be found in the Opentrons Labware Library: https://labware.opentrons.com/
+
+Adjust the variables "pbs_aspirate_volume" and "d_meme_dispense_volume" to the required volumes for your experiment.
+
+
+:*************************
+
+

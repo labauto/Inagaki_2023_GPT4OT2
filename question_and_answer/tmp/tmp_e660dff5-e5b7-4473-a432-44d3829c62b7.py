@@ -1,0 +1,108 @@
+Sure, here is an example Python script for running an experiment to exchange hMSC cell culture medium using PBS(-) and D-MEM on an Opentrons machine. 
+
+``` python
+from opentrons import labware, instruments, robot
+
+# Load the labware
+
+plate_6 = labware.load('corning_6_wellplate_16.8ml_flat',2)
+tiprack = labware.load('opentrons-tiprack-300ul',1)
+
+# Load pipettes
+
+p300 = instruments.P300_Single(mount='left', tip_racks=[tiprack])
+
+# Define the locations of the reagents
+
+PBS_minus = labware.load('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical',3)
+D_MEM = labware.load('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical',4)
+
+# Define the volume to dispense
+
+PBS_minus_volume = 400
+D_MEM_volume = 400
+
+# Define the mixing steps
+
+mix_repetitions = 5
+mix_aspirate_volume = 300
+mix_dispense_volume = 300
+
+# Define the starting well and the number of wells to handle
+
+starting_well = 'A1'
+n_wells = 6
+
+# Mix and aspirate the current medium from each well
+
+for well in plate_6.wells(starting_well, length=n_wells): 
+    
+    p300.pick_up_tip()
+    
+    p300.mix(mix_repetitions, mix_aspirate_volume, well.bottom(3))
+    p300.aspirate(mix_aspirate_volume, well.bottom(3))
+    p300.move_to(well.top(-5))
+    p300.dispense(mix_dispense_volume, well)
+    
+    p300.drop_tip()
+
+# Exchange with PBS_minus
+
+for well in plate_6.wells(starting_well, length=n_wells):
+ 
+    p300.pick_up_tip()
+    
+    p300.aspirate(PBS_minus_volume, PBS_minus.wells(0))
+    p300.move_to(well.top(-5))
+    p300.dispense(PBS_minus_volume, well)
+    
+    p300.drop_tip()
+
+# Mix and aspirate from each well after the exchange
+
+for well in plate_6.wells(starting_well, length=n_wells): 
+    
+    p300.pick_up_tip()
+    
+    p300.mix(mix_repetitions, mix_aspirate_volume, well.bottom(3))
+    p300.aspirate(mix_aspirate_volume, well.bottom(3))
+    p300.move_to(well.top(-5))
+    p300.dispense(mix_dispense_volume, well)
+    
+    p300.drop_tip()
+
+# Exchange with D_MEM
+
+for well in plate_6.wells(starting_well, length=n_wells):
+ 
+    p300.pick_up_tip()
+    
+    p300.aspirate(D_MEM_volume, D_MEM.wells(0))
+    p300.move_to(well.top(-5))
+    p300.dispense(D_MEM_volume, well)
+    
+    p300.drop_tip()
+
+# Mix and aspirate from each well after the exchange
+
+for well in plate_6.wells(starting_well, length=n_wells): 
+    
+    p300.pick_up_tip()
+    
+    p300.mix(mix_repetitions, mix_aspirate_volume, well.bottom(3))
+    p300.aspirate(mix_aspirate_volume, well.bottom(3))
+    p300.move_to(well.top(-5))
+    p300.dispense(mix_dispense_volume, well)
+    
+    p300.drop_tip()
+
+# Return pipette to home position
+
+p300.home()
+```
+Note: This is only an example and would need to be adjusted for your specific experiment. It also assumes that your Opentrons machine is calibrated and connected to your computer via USB.
+
+
+:*************************
+
+

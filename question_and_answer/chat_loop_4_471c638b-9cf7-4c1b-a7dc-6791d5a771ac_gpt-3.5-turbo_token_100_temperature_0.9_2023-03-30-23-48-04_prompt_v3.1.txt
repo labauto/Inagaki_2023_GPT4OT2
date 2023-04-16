@@ -1,0 +1,40 @@
+prompt:*************************
+ I got this error:
+```
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 110, in _parse_python
+    parsed = ast.parse(protocol_contents, filename=ast_filename)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/ast.py", line 47, in parse
+    return compile(source, filename, mode, flags,
+  File "./question_and_answer/tmp/tmp_77f3eda9-5be6-4b27-bcf2-e613e9a07310.py", line 1
+    Yes, it seems like your protocol code is not specifying the API level. You can fix this error by adding the following lines of code at the beginning of your protocol:
+            ^
+SyntaxError: invalid syntax
+
+```
+can you fix it? Make sure you only answer Python script.
+answer:*************************
+It seems like there is an error in the Python script where the first line is not a valid Python code. The error is pointing to a line that appears to be a statement. 
+
+Please make sure that the first line is a valid Python code and remove any statements that are not part of the Python script. The first line could be a shebang that specifies the interpreter to run the script. For instance, the first line could look like:
+
+```python
+#!/usr/bin/env python
+```
+
+This line tells the system which interpreter to use for running the script.
+
+Once you fix this error, try running the simulation again.
+
+
+:*************************
+
+

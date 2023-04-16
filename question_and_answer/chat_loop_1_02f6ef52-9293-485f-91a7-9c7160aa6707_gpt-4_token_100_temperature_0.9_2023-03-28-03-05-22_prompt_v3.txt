@@ -1,0 +1,146 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Measurement of viability and cytotoxicity of an adherent cell line, A549 cells, treated with thapsigargin Seeding A549 cells and addition of various concentrations of Thapsigargin on the second day after the cells have adhered to the 96 well TC plate. On the first day of plating and the second day when the drug additions are to take place, follow the steps below- Clean the inside of the robot with 70 % ethanol and turn on the HEPA filter at low fan speed for about an hour before seeding the cells on 96 well plate. Continue to keep the HEPA filter turned on during the duration of setting up the robot with the respective labware, dilutions of the drug (thapsigargin)on the second day and addition of the drug on to the 96 well plate
+
+1. Take a 24–48 hours old T-75 flask of A549 cells. Take a cell count using the automated Countess 3 machine (Thermofisher Scientific) after treating the cells with Tryple Express enzyme and dislodging the adherent cells.
+
+2. 8000 cells are to be seeded in each well of the 96 well plate. Adjust the cell volume in 10% Ham’s F12K medium in such a way that 60 microL of cells contain the cell number mentioned above.
+
+3. The cell suspension was then dispensed in ten 1.5mL snap-capped tubes and placed in Slot 6 in the tube rack(225microL).
+
+4. The medium was added in wells A5 to C5 as negative control
+
+5. On the second day, roughly after 12 to 16 hours of seeding, the drug dilutions and additions are completed.
+
+6. The first tube A1 in Slot 7 contains 35microL of 1mM Thapsigargin.
+
+7. Next, prepare dilutions of various concentrations of thapsigargin in 10% Ham’s F12K medium (4X concentrations) after preparing the initial stocks ranging from 10nM to 100microM. The molar concentrations of stocks in tubes in positions are - A1 1mM, A2 100microM, A3 10microM, A4 1microM, A5 100nM, A6 50nM and B1 10nM.
+
+8. The 4X concentrations of thapsigargin are prepared in tubes C1 to C6 and D1 to D6 with the following concentrations in the tubes C1 1.56nM, C2 3.12nM, C3 6.24nM, C4 12.52nM, C5 25nM, C6 50nM, D1 100nM, D2 200nM, D3 400nM, D4 800nM D5 1600nM and D6 2000nM
+
+9. For both the initial stocks and the 4X working concentrations, the Ham’s F12 K diluent in added to respective tubes. Then the thapsigargin is added to the tubes and for each dilution, the mix is first pipetted 3-4 times before aspirating the required volume of thapsigargin and transferring to the next adjacent tube to get the required concentration. Once the 4X concentrations are prepared, prepare 2X concentrations of the drug. First, 100microL of medium is added to tubes C1, C3, C5 and D1 to D6 in Slot 6. Next 100microL of 4X concentration of thapsigargin is transferred from tubes in Slot7 to tubes in Slot 6 to result in 2X concentration. For each concentration, mix the drug several times by aspirating and dispensing in the same tube. Add the equal volume of 2X thapsigargin to each well of 96 well plate in triplicate for one concentration in which cells are seeded. This will result in 1X concentration of the drug used for the study. Continue adding column-wise the increasing concentrations of thapsigargin. Namely A1, B1, C1 of 96 well plate contains control cells. D1, E1 and F1 contains 0.39nM concentration of thapsigargin treated cells. The wells in D4, E4 and F4 contains cells with 500nM thapsigargin concentration. The wells from A5 to C5 contain medium without any cells (medium control). After 72 hours of drug treatment, carry out the following steps.
+
+10. Pick up 20microL tip from Slot 10. Transfer 15microL of CellTox Green reagent from B2 of the Opentrons 10 tube rack with Falcon 4X50 mL, 6X15mL Conical-Rack to A1 of 96 well plate placed on the Heater Shaker. Repeat this step to add the reagent to wells B1 to H1, A2 to H2, A3 to H3, A4 to F4, A5 to C5.
+
+11. After the addition of the reagent, set the Heater Shaker to orbital shaking for 2 minutes at 500 rpm.
+
+12. After the orbital shaking of the heater shaker is complete, incubate the plate at RT for 15 min.
+
+13. Remove the plate from the heater shaker and read the fluorescence at 485 nm excitation and 520 nm emission using the Biotek microplate reader.
+
+14. Place the plate back on the heater shaker and start with additions for the cell viability assay.
+
+15. Pick up 200microL tip from Slot 4. Aspirate 80microL of Cell Titer Glo 2.0 reagent from B1 of the Opentrons 10 tube rack and dispense it into A1 well of the 96 well white TC plate on Heater Shaker module. Repeat this step to add the reagent to wells B1 to H1, A2 to H2, A3 to H3, A4 to F4 and A5 to C5.
+
+16. Once the reagent addition is complete, set the Heater shaker to orbital shaking at 500 rpm for 2 minutes. Incubate at RT for 10 minutes.
+
+17. Remove the plate from heater shaker and read the plate for luminescence using the Biotek microplate reader.
+
+
+
+###
+
+
+    
+answer:*************************
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'apiLevel': '2.11',
+    'protocolName': 'Viability and Cytotoxicity Assay'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    
+    # Declare labware
+    tiprack_20ul = protocol.load_labware('opentrons_96_tiprack_20ul', 10)
+    tiprack_200ul = protocol.load_labware('opentrons_96_tiprack_300ul', 4)
+    tube_rack_15ml = protocol.load_labware('opentrons_15_tuberack_falcon_15ml_conical', 6)
+    stock_rack = protocol.load_labware('opentrons_24_tuberack_generic_2ml_screwcap', 7)
+    reagent_rack = protocol.load_labware('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', 8)
+    plate_96_well = protocol.load_labware('opentrons_96_tc_plate_200ul', 9)
+    heater_shaker = protocol.load_module('temperature module gen2', 1)
+    shaker_plate = heater_shaker.load_labware('opentrons_96_tc_plate_200ul')
+    temp_plate = protocol.load_labware('opentrons_96_aluminumblock_generic_pcr_strip_200ul', 11)
+    
+    # Declare pipettes
+    p20 = protocol.load_instrument('p20_multi_gen2', 'right', tip_racks=[tiprack_20ul])
+    p300 = protocol.load_instrument('p300_multi_gen2', 'left', tip_racks=[tiprack_200ul])
+
+    # First labware, 1mM Thapsigargin (A1)
+    stock_A1 = stock_rack.wells_by_name()['A1']
+    
+    # Thapsigargin stock concentrations
+    stock_concentrations = ['100uM', '10uM', '1uM', '100nM', '50nM', '10nM']
+    
+    # Volume transfer per concentration
+    volume_transfer = [25, 22.5, 20, 17.5, 15, 12.5]
+
+    # Prepare Thapsigargin stocks
+    for i in range(6):
+        p300.transfer(volume_transfer[i], stock_A1, stock_rack.wells_by_name()[f'A{i + 2}'])
+
+    # Dilution concentrations
+    dilutions_4x = ['1.56nM', '3.12nM', '6.24nM', '12.52nM', '25nM', '50nM', '100nM', '200nM', '400nM', '800nM', '1600nM', '2000nM']
+    dilutions_2x = [dil.replace('nM', 'nM_2X') for dil in dilutions_4x]
+
+    # Prepare wells
+    well_list = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6']
+
+    # Prepare 4X dilutions
+    for i, tube_well in enumerate(well_list):
+        p300.transfer(50, stock_rack.wells_by_name()[f'A{i + 1}'], stock_rack.wells_by_name()[tube_well])
+
+    # Prepare 2X dilutions
+    for i in range(12):
+        p300.transfer(100, stock_rack.wells_by_name()[well_list[i]], tube_rack_15ml.wells_by_name()[f'C{i + 1}'])
+
+    # Map to 96 well plate
+    well_symbols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    concentration_map = {
+        (i, j): dilutions_2x[(i // 2) + ((j - 1) * 4)] for j in range(1, 5) for i in range(1, 7)
+    }
+
+    # Fill 96 well plate with 2X concentrated dilutions
+    for i, well_sym in enumerate(well_symbols):
+        for j in range(1, 13):
+            if (i, j) in concentration_map:
+                p300.transfer(60, tube_rack_15ml.wells_by_name()[f'C{j - 1}'],
+                              plate_96_well.wells_by_name()[f'{well_sym}{j}'])
+
+    # Function to add reagent with specific mixing parameters
+    def add_reagent(reagent_well, volume, mix_volume, num_mixes):
+        p20.pick_up_tip()
+        for dest_well in plate_96_well.rows()[0]:
+            if dest_well in plate_96_well.wells_by_name():
+                p20.distribute(volume, reagent_rack.wells_by_name()[reagent_well], dest_well,
+                               mix_after=(num_mixes, mix_volume))
+        p20.drop_tip()
+
+    # Add CellTox Green reagent
+    add_reagent("B2", 15, 20, 3)
+
+    # Shaking and timed incubation
+    heater_shaker.shake(duration=2*60, speed=500)
+    protocol.delay(15*60)
+    
+    # Add Cell Titer Glo 2.0 reagent
+    add_reagent("B1", 80, 100, 5)
+
+    # Shaking and timed incubation
+    heater_shaker.shake(duration=2*60, speed=500)
+    protocol.delay(10*60)
+
+    # End of protocol
+```
+This script is designed to run the viability and cytotoxicity assay using thapsigargin on the Opentrons platform. Make sure to review the Opentrons API documentation and test the protocol in a simulation environment before running on the actual robot.
+
+
+:*************************
+
+

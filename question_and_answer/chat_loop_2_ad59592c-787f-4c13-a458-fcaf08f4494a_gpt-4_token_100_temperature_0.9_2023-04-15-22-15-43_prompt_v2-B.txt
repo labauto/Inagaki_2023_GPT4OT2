@@ -1,0 +1,59 @@
+prompt:*************************
+ I got this error:
+```
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 114, in _parse_python
+    version = get_version(metadata, parsed)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 348, in get_version
+    raise RuntimeError(
+RuntimeError: If this is not an API v1 protocol, you must specify the target api level in the apiLevel key of the metadata. For instance, metadata={"apiLevel": "2.0"}
+
+```
+can you fix it? Make sure you only answer Python script.
+answer:*************************
+Certainly! Here's an updated Python script to run your Opentrons machine for the immunostained hMSC cells experiment. I have included the necessary `metadata` to fix the error you encountered.
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'apiLevel': '2.9',
+    'protocolName': 'Immunostained hMSC Cell Preparation'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Labware
+    tiprack_300 = protocol.load_labware('opentrons_96_tiprack_300ul', '1')
+    plate_6well = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '2')
+    
+    # Pipettes
+    pipette_300 = protocol.load_instrument('p300_single_gen2', 'right', tip_racks=[tiprack_300])
+
+    # Reagents
+    cell_culture_medium = plate_6well['A1']
+    
+    # Wells for the hMSC cells
+    wells = ['B1', 'C1', 'A2', 'B2', 'C2', 'A3']
+
+    # Transfer cell culture medium to other wells
+    for well in wells:
+        pipette_300.pick_up_tip()
+        pipette_300.transfer(2000, cell_culture_medium, plate_6well[well], new_tip='never')
+        pipette_300.mix(5, 500, plate_6well[well])
+        pipette_300.drop_tip()
+```
+
+You can adjust volumes and parameters as needed. Make sure you have both the `opentrons` package installed and the appropriate labware definitions loaded.
+
+
+:*************************
+
+

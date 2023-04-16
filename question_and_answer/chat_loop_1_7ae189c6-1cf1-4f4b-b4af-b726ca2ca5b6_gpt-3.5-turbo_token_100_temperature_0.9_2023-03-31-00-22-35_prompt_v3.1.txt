@@ -1,0 +1,194 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Measurement of viability and cytotoxicity of an adherent cell line, A549 cells, treated with thapsigargin Seeding A549 cells and addition of various concentrations of Thapsigargin on the second day after the cells have adhered to the 96 well TC plate. On the first day of plating and the second day when the drug additions are to take place, follow the steps below- Clean the inside of the robot with 70 % ethanol and turn on the HEPA filter at low fan speed for about an hour before seeding the cells on 96 well plate. Continue to keep the HEPA filter turned on during the duration of setting up the robot with the respective labware, dilutions of the drug (thapsigargin)on the second day and addition of the drug on to the 96 well plate
+
+1. Take a 24–48 hours old T-75 flask of A549 cells. Take a cell count using the automated Countess 3 machine (Thermofisher Scientific) after treating the cells with Tryple Express enzyme and dislodging the adherent cells.
+
+2. 8000 cells are to be seeded in each well of the 96 well plate. Adjust the cell volume in 10% Ham’s F12K medium in such a way that 60 microL of cells contain the cell number mentioned above.
+
+3. The cell suspension was then dispensed in ten 1.5mL snap-capped tubes and placed in Slot 6 in the tube rack(225microL).
+
+4. The medium was added in wells A5 to C5 as negative control
+
+5. On the second day, roughly after 12 to 16 hours of seeding, the drug dilutions and additions are completed.
+
+6. The first tube A1 in Slot 7 contains 35microL of 1mM Thapsigargin.
+
+7. Next, prepare dilutions of various concentrations of thapsigargin in 10% Ham’s F12K medium (4X concentrations) after preparing the initial stocks ranging from 10nM to 100microM. The molar concentrations of stocks in tubes in positions are - A1 1mM, A2 100microM, A3 10microM, A4 1microM, A5 100nM, A6 50nM and B1 10nM.
+
+8. The 4X concentrations of thapsigargin are prepared in tubes C1 to C6 and D1 to D6 with the following concentrations in the tubes C1 1.56nM, C2 3.12nM, C3 6.24nM, C4 12.52nM, C5 25nM, C6 50nM, D1 100nM, D2 200nM, D3 400nM, D4 800nM D5 1600nM and D6 2000nM
+
+9. For both the initial stocks and the 4X working concentrations, the Ham’s F12 K diluent in added to respective tubes. Then the thapsigargin is added to the tubes and for each dilution, the mix is first pipetted 3-4 times before aspirating the required volume of thapsigargin and transferring to the next adjacent tube to get the required concentration. Once the 4X concentrations are prepared, prepare 2X concentrations of the drug. First, 100microL of medium is added to tubes C1, C3, C5 and D1 to D6 in Slot 6. Next 100microL of 4X concentration of thapsigargin is transferred from tubes in Slot7 to tubes in Slot 6 to result in 2X concentration. For each concentration, mix the drug several times by aspirating and dispensing in the same tube. Add the equal volume of 2X thapsigargin to each well of 96 well plate in triplicate for one concentration in which cells are seeded. This will result in 1X concentration of the drug used for the study. Continue adding column-wise the increasing concentrations of thapsigargin. Namely A1, B1, C1 of 96 well plate contains control cells. D1, E1 and F1 contains 0.39nM concentration of thapsigargin treated cells. The wells in D4, E4 and F4 contains cells with 500nM thapsigargin concentration. The wells from A5 to C5 contain medium without any cells (medium control). After 72 hours of drug treatment, carry out the following steps.
+
+10. Pick up 20microL tip from Slot 10. Transfer 15microL of CellTox Green reagent from B2 of the Opentrons 10 tube rack with Falcon 4X50 mL, 6X15mL Conical-Rack to A1 of 96 well plate placed on the Heater Shaker. Repeat this step to add the reagent to wells B1 to H1, A2 to H2, A3 to H3, A4 to F4, A5 to C5.
+
+11. After the addition of the reagent, set the Heater Shaker to orbital shaking for 2 minutes at 500 rpm.
+
+12. After the orbital shaking of the heater shaker is complete, incubate the plate at RT for 15 min.
+
+13. Remove the plate from the heater shaker and read the fluorescence at 485 nm excitation and 520 nm emission using the Biotek microplate reader.
+
+14. Place the plate back on the heater shaker and start with additions for the cell viability assay.
+
+15. Pick up 200microL tip from Slot 4. Aspirate 80microL of Cell Titer Glo 2.0 reagent from B1 of the Opentrons 10 tube rack and dispense it into A1 well of the 96 well white TC plate on Heater Shaker module. Repeat this step to add the reagent to wells B1 to H1, A2 to H2, A3 to H3, A4 to F4 and A5 to C5.
+
+16. Once the reagent addition is complete, set the Heater shaker to orbital shaking at 500 rpm for 2 minutes. Incubate at RT for 10 minutes.
+
+17. Remove the plate from heater shaker and read the plate for luminescence using the Biotek microplate reader.
+
+Mmake sure that if the code is long, split the code into multiple tiny functions and use it later in the main function. Ideally, split the experiment into multiple steps, and for each step, write a function that does the step. And then, call the function in the main function.
+
+
+
+###
+
+
+    
+answer:*************************
+Sure, here's an example script:
+
+```
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'Viability and Cytotoxicity Assay',
+    'author': 'Your Name',
+    'description': 'Measurement of cell viability and cytotoxicity of A549 cells treated with thapsigargin',
+    'apiLevel': '2.11'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Step 1: Cell Count
+    countess = protocol.load_module('countess', '3')
+    countess.reset_tipracks()
+    countess.load_container('countess-slide', '384-plate-countess')
+    countess.open_lid()
+    protocol.pause('Clean the Opentrons robot with 70 % ethanol and turn on the HEPA filter \
+                    at low fan speed for about an hour before seeding the cells on 96 well plate. \
+                    Continue to keep the HEPA filter turned on during the duration of setting up \
+                    the robot with the respective labware, dilutions of the drug (thapsigargin) \
+                    on Day 2 and addition of the drug on to the 96 well plate.')
+    a549 = countess.side_one.wells('A4').count_cells()
+    cell_count = a549.count
+    protocol.pause(f'Loaded T-75 flask of A549 cells has {cell_count} cells.')
+
+    # Step 2: Cell Seeding
+    tc_plate = protocol.load_labware('corning_96_wellplate_360ul_flat', '1')
+    cells_vol = round(0.6 * 100000 / cell_count, 1)
+    cells = protocol.transfer(cells_vol, a549, tc_plate.rows()[0], new_tip='always')
+    
+    # Step 3: Dispensing Cell Suspension in Tubes
+    tube_rack = protocol.load_labware('opentrons_24_tuberack_1500ul', '6')
+    tubes = tube_rack.rows()[0]
+    cell_tubes = [t for t in tubes if t != tubes[0]]
+    for tube in cell_tubes:
+        protocol.transfer(25, cells, tube, mix_after=(5, 10))
+
+    # Step 4: Adding Control Medium to TC Plate
+    control = tc_plate.rows()[4][:3]
+    protocol.transfer(60, '10% Ham’s F12K medium', control)
+
+    # Step 5: Dilution and Addition of Thapsigargin on Day 2
+    protocol.pause('Please replace tube rack in Slot 6 with 24 tube rack with 1mM thapsigargin \
+                    in tube A1 and continue')
+    thapsigargin_tubes = tube_rack.rows()[1]
+    thapsigargin = thapsigargin_tubes[0]
+    first_col = tc_plate.columns()[0]
+    control = first_col[:3]
+
+    # Step 6: Adding 1mM Thapsigargin
+    protocol.transfer(35, thapsigargin, control)
+
+    # Step 7: Preparing Dilutions of Various Concentrations of Thapsigargin
+    thapsigargin_stocks = [
+        ('A2', 100), ('A3', 10), ('A4', 1), ('A5', 0.1), ('A6', 0.05), ('B1', 0.01)
+    ]
+    for tube_pos, dilution in thapsigargin_stocks:
+        conc = dilution * 1e-6
+        tube = thapsigargin_tubes[tube_pos]
+        protocol.transfer(25, f'{conc} M thapsigargin', tube)
+
+    # Step 8: Preparing 4X and 2X Dilutions of Thapsigargin
+    diluents = ['10% Ham’s F12K medium', '3.44% DMSO in 10% Ham’s F12K medium']
+    thapsigargin_dilutions = [
+        ('C', 1.56), ('C', 3.12), ('C', 6.24), ('C', 12.52), ('C', 25.0), ('C', 50.0), 
+        ('D', 100.0), ('D', 200.0), ('D', 400.0), ('D', 800.0), ('D', 1600.0), ('D', 2000.0)
+    ]
+    for row, conc in thapsigargin_dilutions:
+        d = 1 if row == 'C' else 2
+        dilution = f'{d}X {conc} nM'
+        diluent = diluents[d-1]
+        source = thapsigargin_tubes[f'{row}1']
+        dests = tc_plate.columns()[int(row):int(row)+3]
+        for dest in dests:
+            protocol.transfer(50, diluent, dest[:3])
+            protocol.transfer(50, source, dest[:3], mix_after=(5, 10))
+    
+    # Step 9: Adding 1X Dilution of Thapsigargin to TC Plate
+    channel = protocol.load_instrument('p300_single_gen2', 'right', tip_racks=[protocol.load_labware('opentrons_96_tiprack_300ul', '8')])
+    for col in range(3, 9):
+        for idx, well in enumerate(tc_plate.columns()[col]):
+            dests = [well, dests[idx] for dests in tc_plate.columns()[col+6:col+9]]
+            channel.pick_up_tip()
+            channel.transfer(60, dests, tc_plate.wells()[col*8+idx], mix_after=(5, 20), new_tip='never')
+            channel.drop_tip()
+
+    # Step 10: Adding CellTox Green Reagent to TC Plate
+    ctg = protocol.load_labware('celltiter_glo', '2')
+    ctg_tube = ctg.wells_by_name()['B2']
+    ctg_dests = tc_plate.wells()[:24] + tc_plate.wells()[33:57]
+    channel = protocol.load_instrument('p20_single_gen2', 'left', tip_racks=[protocol.load_labware('opentrons_96_tiprack_20ul', '9')])
+    for dest in ctg_dests:
+        channel.pick_up_tip()
+        channel.transfer(15, ctg_tube, dest, new_tip='never')
+        channel.drop_tip()
+
+    # Step 11: Orbital Shaking for 2 Minutes at 500 RPM
+    for idx in range(0, 8):
+        tc_plate.wells_by_name()[f'{chr(idx+65)}1'].set_temperature(25)
+    protocol.pause('Place the plate on the heater shaker, and start shaking for 2 minutes at 500 rpm.')
+    for idx in range(0, 8):
+        tc_plate.wells_by_name()[f'{chr(idx+65)}1'].set_temperature(4)
+
+    # Step 12: Incubate Plate at Room Temperature for 15 Minutes
+    protocol.pause('Remove the plate from the heater shaker and incubate at room temperature for 15 minutes.')
+
+    # Step 13: Read Fluorescence at 485 nm Excitation and 520 nm Emission
+    reader = protocol.load_module('biotek_elx808', '7')
+    reader.connect()
+    reader.set_wavelengths(485, 520)
+    protocol.pause('Place the plate back on the heater shaker and start with additions for the cell viability assay. \
+                    After the addition of the reagent, set the heater shaker to orbital shaking at 500 rpm for \
+                    two minutes. Incubate at room temperature for 10 minutes. Remove the plate from heater shaker \
+                    after incubation and read the plate for luminescence using the Biotek microplate reader.')
+
+    # Step 14: Adding Cell Titer Glo 2 Reagent to TC Plate
+    ctg_tube = ctg.wells_by_name()['B1']
+    for dest in ctg_dests:
+        channel.pick_up_tip()
+        channel.transfer(80, ctg_tube, dest, new_tip='never')
+        channel.drop_tip()
+
+    # Step 15: Orbital Shaking for 2 Minutes at 500 RPM, Followed by 10 Minute Incubation at RT
+    for idx in range(0, 8):
+        tc_plate.wells_by_name()[f'{chr(idx+65)}1'].set_temperature(25)
+    protocol.pause('Place the plate on the heater shaker, and start shaking for 2 minutes at 500 rpm. \
+                   Incubate at room temperature for 10 minutes.')
+    for idx in range(0, 8):
+        tc_plate.wells_by_name()[f'{chr(idx+65)}1'].set_temperature(4)
+
+    # Step 16: Read Luminescence on a Microplate Reader
+    reader.set_wavelengths(600, 650)
+    protocol.pause('Remove the plate from the reader and dispose of it properly.')
+``` 
+
+Please note that this is an example script that may need to be modified to fit specific lab equipment and reagents. Check the script carefully before running the experiment.
+
+
+:*************************
+
+

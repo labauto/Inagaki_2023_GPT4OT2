@@ -1,0 +1,76 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging iPS cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+    
+answer:*************************
+Sure! Here's a Python script that uses Opentrons to perform the iPS cell culture medium exchange experiment you described:
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'iPS cell culture medium exchange',
+    'author': 'Your Name',
+    'description': 'Exchanging iPS cell culture medium using PBS(-) and D-MEM',
+    'apiLevel': '2.3'
+}
+
+# Define the protocol
+def run(protocol: protocol_api.ProtocolContext):
+    
+    # Define the labware
+    plates = [protocol.load_labware('corning_6_wellplate_16.8ml_flat', slot)
+              for slot in ['1', '2', '3']]
+    pbs = protocol.load_labware('opentrons_96_tiprack_10ul', '4')
+    dmem = protocol.load_labware('opentrons_96_tiprack_300ul', '5')
+
+    # Define the pipettes
+    p10 = protocol.load_instrument('p10_single', 'left', tip_racks=[pbs])
+    p300 = protocol.load_instrument('p300_single', 'right', tip_racks=[dmem])
+
+    # Perform the medium exchange
+    for plate in plates:
+        for well in plate.wells():
+            # Aspirate 10 uL of medium from the well using p10
+            p10.pick_up_tip()
+            p10.aspirate(10, well.bottom(1))
+            p10.drop_tip()
+            
+            # Dispense 10 uL of PBS into the well using p10
+            p10.pick_up_tip()
+            p10.dispense(10, well.bottom(1))
+            p10.drop_tip()
+            
+            # Repeat aspirate and dispense steps for D-MEM
+            p300.pick_up_tip()
+            p300.aspirate(300, well.bottom(1))
+            p300.drop_tip()
+            
+            p300.pick_up_tip()
+            p300.dispense(300, well.bottom(1))
+            p300.drop_tip()
+            
+    # End the protocol
+    protocol.comment('Experiment complete!')
+```
+
+In this script, we first define the layout of our labware - three 6-well plates for the cells, a tip rack for PBS(-), and a tip rack for D-MEM. We then define our pipettes - a P10 single-channel pipette for transferring 10 uL volumes, and a P300 single-channel pipette for transferring 300 uL volumes. 
+
+We then iterate through each well of each plate, aspirating 10 uL of medium from the well using the P10, dispensing 10 uL of PBS using the P10, aspirating 300 uL of medium from the well using the P300, and dispensing 300 uL of D-MEM using the P300. Finally, we end the protocol with a comment indicating that the experiment is complete.
+
+Note that this script is just an example - you'll need to adjust it for your specific experimental parameters, including the volumes to aspirate and dispense and the number of wells and plates you're using.
+
+
+:*************************
+
+

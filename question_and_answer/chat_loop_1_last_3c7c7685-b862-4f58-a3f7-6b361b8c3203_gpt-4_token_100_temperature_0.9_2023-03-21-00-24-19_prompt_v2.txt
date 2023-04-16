@@ -1,0 +1,81 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+To write a Python script for automating an experiment on an Opentrons machine, you first need to install the Opentrons API. You can find more information about the API and its installation in the [official documentation](https://docs.opentrons.com/).
+
+To create a Python script that performs the experiment you described, follow this outline:
+
+1. Import the Opentrons API.
+2. Define custom labware, if necessary.
+3. Specify the pipettes and labware.
+4. Define the protocol procedure.
+
+Here's a sample script that exchanges the hMSC cell culture medium using PBS(-) and D-MEM in a 6-well plate:
+
+```python
+from opentrons import protocol_api
+
+metadata = {'apiLevel': '2.10'}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Labware
+    six_well_plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '1')
+    pbs_tube = protocol.load_labware('opentrons_15_tuberack_falcon_15ml_conical', '2')
+    dmem_tube = protocol.load_labware('opentrons_15_tuberack_falcon_15ml_conical', '3')
+    
+    # Pipettes
+    left_pipette = protocol.load_instrument('p1000_single', 'left', tip_racks=[protocol.load_labware('opentrons_96_tiprack_1000ul', '4')])
+    right_pipette = protocol.load_instrument('p300_single', 'right', tip_racks=[protocol.load_labware('opentrons_96_tiprack_300ul', '5')])
+    
+    # Wells
+    wells = six_well_plate.wells()
+    pbs_well = pbs_tube['A1']
+    dmem_well = dmem_tube['A1']
+
+    # Exchanging cell culture medium
+    for well in wells:
+        # Aspirating old medium (you can adjust the volume according to the medium amount in your wells)
+        left_pipette.pick_up_tip()
+        left_pipette.aspirate(1000, well)
+        left_pipette.dispense(1000, well.top()) # Dispense to waste
+        left_pipette.drop_tip()
+
+        # Washing with PBS(-) 2 times (you can adjust the volume and the times if necessary)
+        for _ in range(2):
+            right_pipette.pick_up_tip()
+            right_pipette.aspirate(200, pbs_well)
+            right_pipette.dispense(200, well)
+            right_pipette.mix(3, 200, well) # Mixing PBS(-) and old medium
+            right_pipette.aspirate(200, well)
+            right_pipette.dispense(200, well.top()) # Dispense to waste
+            right_pipette.drop_tip()
+
+        # Adding D-MEM (you can adjust the volume according to the desired amount in your wells)
+        right_pipette.pick_up_tip()
+        right_pipette.aspirate(200, dmem_well)
+        right_pipette.dispense(200, well)
+        right_pipette.drop_tip()
+
+    protocol.comment('Cell culture medium exchange completed.')
+```
+
+This script assumes you're using the P1000 and P300 single-channel pipettes and appropriate tip racks. Adjust the labware and pipettes according to what you have available. Additionally, the script assumes that the 6-well plate is filled with samples, PBS(-) is in a 15 mL Falcon tube in position A1 of tube rack 2, and D-MEM is in a 15 mL Falcon tube in position A1 of tube rack 3. Customize the script as needed for your specific setup.
+
+Please note that to run your script on the Opentrons robot, you should use the Opentrons App, which can be downloaded from the [official website](https://opentrons.com/ot-app/).
+
+
+:*************************
+
+

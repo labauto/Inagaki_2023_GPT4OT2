@@ -1,0 +1,79 @@
+prompt:*************************
+ I got this error:
+```
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 114, in _parse_python
+    version = get_version(metadata, parsed)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 348, in get_version
+    raise RuntimeError(
+RuntimeError: If this is not an API v1 protocol, you must specify the target api level in the apiLevel key of the metadata. For instance, metadata={"apiLevel": "2.0"}
+
+```
+can you fix it? Make sure you only answer Python script.
+answer:*************************
+Sure, here is a Python script that can accomplish the described experiment using the Opentrons machine. It includes the required `metadata` dictionary specifying the target API level.
+
+```python
+metadata = {
+    'protocolName': 'Immunostained iPS cells',
+    'author': 'Your name here',
+    'description': 'Preparing immunostained iPS cells to visualize lysosomes',
+    'apiLevel': '2.10'
+}
+
+def run(imaging_cycle: int = 3):
+    
+    # module import
+    from opentrons import protocol_api 
+    from opentrons.types import Point
+    
+    # api instantiation
+    protocol = protocol_api.ProtocolContext()
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', 1)
+    tiprack_20 = protocol.load_labware('opentrons_96_tiprack_20ul', 4)
+    p20 = protocol.load_instrument('p20_single_gen2', 'right', tip_racks=[tiprack_20])
+
+    # reagents
+    buffer = plate[1]
+    primary_antibody = plate[2]
+    secondary_antibody = plate[3]
+    stain = plate[4]
+    
+    # distribute buffer
+    p20.distribute(10, buffer, [well.top() for well in plate.rows()[0]], disposal_volume=2)
+    
+    # perform washing step
+    for cycle in range(imaging_cycle):
+        protocol.comment(f'Performing washing cycle #{cycle+1}')
+        wash_wells = plate.rows()[0][1:3]
+        p20.transfer(10, wash_wells[0], wash_wells[1], new_tip='always', disposal_volume=2)
+        p20.transfer(10, wash_wells[1], wash_wells[0], new_tip='always', disposal_volume=2)
+    
+    # perform blocking
+    protocol.comment('Adding primary antibody')
+    p20.transfer(5, primary_antibody, plate.rows()[0][0], new_tip='always', disposal_volume=2)
+    
+    p20.transfer(5, buffer, plate.rows()[0][0], mix_before=(5,2), new_tip='always', disposal_volume=2)
+    protocol.comment('Adding secondary antibody')
+    p20.transfer(5, secondary_antibody, plate.rows()[0][0], new_tip='always', disposal_volume=2)
+    
+    p20.transfer(5, buffer, plate.rows()[0][0], mix_before=(5,2), new_tip='always', disposal_volume=2)
+    protocol.comment('Adding lysosome stain')
+    p20.transfer(5, stain, plate.rows()[0][0], new_tip='always', disposal_volume=2)
+
+run()
+```
+Please make sure that you have Opentrons API v2.10 or higher installed to run this Python script.
+
+
+:*************************
+
+

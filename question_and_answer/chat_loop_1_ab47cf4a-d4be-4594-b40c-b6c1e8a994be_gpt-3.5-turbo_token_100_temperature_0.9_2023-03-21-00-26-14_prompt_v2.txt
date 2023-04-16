@@ -1,0 +1,59 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Sure! Here's an example Python script that uses the Opentrons API to automate the exchange of hMSC cell cultures:
+
+```python
+from opentrons import robot, labware, instruments
+
+# Connect to the robot
+robot.connect()
+
+# Load the labware
+plate = labware.load('6-well-plate', 'B1')
+
+# Define the pipette and tip rack
+pipette = instruments.P300_Single(mount='left', tip_racks=[labware.load('tiprack-200ul', 'A1')])
+
+# Define the media volumes
+pbs_volume = 300  # µL
+dmem_volume = 200  # µL
+
+
+# Start the experiment
+# Pick up some tips
+pipette.pick_up_tip()
+
+# First exchange: remove media with PBS(-), and then add PBS(-)
+pipette.aspirate(pbs_volume, plate[0].bottom(2))  # Remove media from well A1
+pipette.dispense(pbs_volume, plate[0].bottom(2))  # Add PBS(-) to well A1
+
+# Second exchange: remove PBS(-) with D-MEM, then add new D-MEM
+pipette.aspirate(dmem_volume, plate[0].bottom(2))  # Remove PBS(-) from well A1
+pipette.dispense(dmem_volume, plate[0].bottom(2))  # Add new D-MEM to well A1
+
+# Return the tips and disconnect from the robot
+pipette.drop_tip()
+robot.disconnect()
+```
+
+This script assumes that you have a 6-well plate loaded onto the robot in position B1, with the hMSC cell cultures in the first well of the plate. The pipette used is a P300 single-channel pipette, and the volumes for the PBS(-) and D-MEM media exchanges are specified at the beginning of the script.
+
+To run the script, save it as a .py file and run it using a Python interpreter with the Opentrons API installed. Alternatively, you can use the Opentrons app or API to upload the script directly to the robot and run it from there. Remember to always follow proper laboratory and safety protocols when working with biological samples and laboratory equipment.
+
+
+:*************************
+
+

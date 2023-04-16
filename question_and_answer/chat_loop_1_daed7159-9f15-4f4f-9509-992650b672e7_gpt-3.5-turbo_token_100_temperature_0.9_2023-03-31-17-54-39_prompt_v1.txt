@@ -1,0 +1,82 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well, use 1 ml of PBS(-).
+2. After washing, add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 1 mL of cell culture medium (DMEM) to the 6 well plate.
+4. Finish the experiment.
+
+Possible Labware and Pipettes (Note that you don't need to trust these items, you can use any labware and pipette you want):
+1. `opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical`
+2. `p1000_single`
+3. `corning_6_wellplate_16.8ml_flat`
+
+When writing scripts, be aware of the following:
+1. Do not aspirate more than pipette's max volume. For example, if you want to aspirate 2000 µL with a p1000_single, you need to split it into two commands.
+2. Check the number of tips you use to avoid running out of tips.
+3. when load_labware('name', slot), you can't declare the same slot twice, you need to use different slots for different labware.
+
+
+
+###
+
+
+
+answer:*************************
+Sure, here's a Python script that runs this experiment on an Opentrons machine:
+
+```python
+from opentrons import labware, instruments, robot
+
+# Load the labware and pipettes
+tiprack = labware.load('opentrons_96_tiprack_1000ul', '1')
+p1000 = instruments.P1000_Single(mount='left', tip_racks=[tiprack])
+tuberack = labware.load('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '2')
+well_plate = labware.load('corning_6_wellplate_16.8ml_flat', '3')
+
+# Define the volumes and locations
+wash_volume = 1000  # uL
+trypsin_volume = 1000  # uL
+medium_volume = 1000  # uL
+trypsin_location = tuberack.wells('A1')
+medium_location = tuberack.wells('A2')
+wells_to_wash = well_plate.wells()
+
+# Wash the plate
+for well in wells_to_wash:
+    p1000.pick_up_tip()
+    p1000.aspirate(wash_volume, medium_location)
+    p1000.dispense(wash_volume, well)
+    p1000.dispense(wash_volume, well)
+    p1000.dispense(wash_volume, well)
+    p1000.dispense(wash_volume, well)
+    p1000.dispense(wash_volume, well)
+    p1000.drop_tip()
+
+# Add trypsin and wait
+for well in wells_to_wash:
+    p1000.pick_up_tip()
+    p1000.aspirate(trypsin_volume, trypsin_location)
+    p1000.dispense(trypsin_volume, well)
+    p1000.drop_tip()
+
+robot.pause('Wait for 5 minutes')
+
+# Add medium
+for well in wells_to_wash:
+    p1000.pick_up_tip()
+    p1000.aspirate(medium_volume, medium_location)
+    p1000.dispense(medium_volume, well)
+    p1000.drop_tip()
+```
+
+Note that this script assumes the Opentrons machine is correctly calibrated and that the labware is in the correct position in the designated slots. Make sure to also check the compatibility of the labware and pipettes with the specifications provided by the robot manufacturer.
+
+
+:*************************
+
+

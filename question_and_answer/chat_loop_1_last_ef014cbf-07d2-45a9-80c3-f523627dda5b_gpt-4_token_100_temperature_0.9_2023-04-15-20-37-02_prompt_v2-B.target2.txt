@@ -1,0 +1,117 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Prepare immunostained hMSC cells to visualize E-Cadherin.
+The cell is cultured in 6 well plate.
+    
+answer:*************************
+To write a Python script to run on an Opentrons machine, you will need access to the Opentrons API. You can find more information about the API and how to install it here: https://docs.opentrons.com/
+
+Here is a basic script to automate the preparation of immunostained hMSC cells to visualize E-Cadherin using an Opentrons machine. Please note that you may need to modify it based on your laboratory equipment and preferences.
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'Immunostaining hMSC cells',
+    'author': 'Your Name',
+    'description': 'Automating the preparation of immunostained hMSC cells to visualize E-Cadherin in a 6 well plate.',
+    'apiLevel': '2.10'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Define labware
+    plate_6_well = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '1')
+    tiprack_200ul = protocol.load_labware('opentrons_96_tiprack_300ul', '2')
+    reservoir_12_well = protocol.load_labware('usascientific_12_reservoir_22ml', '3')
+
+    # Define pipettes
+    p300 = protocol.load_instrument('p300_single_gen2', 'right', tip_racks=[tiprack_200ul])
+
+    # Reagents in the reservoir
+    wash_buffer = reservoir_12_well.wells_by_name()['A1']
+    blocking_buffer = reservoir_12_well.wells_by_name()['A2']
+    primary_antibody = reservoir_12_well.wells_by_name()['A3']
+    secondary_antibody = reservoir_12_well.wells_by_name()['A4']
+
+    # Protocol
+    wells = ['A1', 'A2', 'A3', 'B1', 'B2', 'B3']
+
+    def wash(wells, times=3):
+        for _ in range(times):
+            for well in wells:
+                p300.pick_up_tip()
+                p300.transfer(200, wash_buffer, plate_6_well.wells_by_name()[well], new_tip='never')
+                p300.drop_tip()
+
+    # Step 1: Remove medium
+    # This is a manual step - aspirate the old medium, discard, and place the plate on the deck.
+
+    # Step 2: Wash the cells with wash buffer
+    wash(wells)
+
+    # Step 3: Add blocking buffer
+    for well in wells:
+        p300.pick_up_tip()
+        p300.transfer(200, blocking_buffer, plate_6_well.wells_by_name()[well], new_tip='never')
+        p300.drop_tip()
+
+    # Step 4: Incubate the cells with the blocking buffer (30mins, RT)
+    # This is a manual step - pause the protocol and resume when incubation is complete.
+
+    protocol.pause("Incubate the cells with the blocking buffer for 30 minutes at room temperature. Press resume when ready.")
+
+    # Step 5: Aspirate blocking buffer
+    for well in wells:
+        p300.pick_up_tip()
+        p300.transfer(200, plate_6_well.wells_by_name()[well], reservoir_12_well.wells_by_name()['A6'], new_tip='never')
+        p300.drop_tip()
+
+    # Step 6: Add primary antibody
+    for well in wells:
+        p300.pick_up_tip()
+        p300.transfer(200, primary_antibody, plate_6_well.wells_by_name()[well], new_tip='never')
+        p300.drop_tip()
+
+    # Step 7: Incubate overnight at 4 degrees Celsius
+    protocol.pause("Incubate the cells overnight at 4°C with the primary antibody. Resume the protocol after incubation.")
+
+    # Step 8: Aspirate primary antibody
+    for well in wells:
+        p300.pick_up_tip()
+        p300.transfer(200, plate_6_well.wells_by_name()[well], reservoir_12_well.wells_by_name()['A7'], new_tip='never')
+        p300.drop_tip()
+
+    # Step 9: Wash the cells with wash buffer
+    wash(wells)
+
+    # Step 10: Add secondary antibody
+    for well in wells:
+        p300.pick_up_tip()
+        p300.transfer(200, secondary_antibody, plate_6_well.wells_by_name()[well], new_tip='never')
+        p300.drop_tip()
+
+    # Step 11: Incubate for 1 hour at room temperature in the dark
+    protocol.pause("Incubate the cells with the secondary antibody for 1 hour at room temperature in the dark. Resume the protocol after incubation.")
+
+    # Step 12: Aspirate secondary antibody
+    for well in wells:
+        p300.pick_up_tip()
+        p300.transfer(200, plate_6_well.wells_by_name()[well], reservoir_12_well.wells_by_name()['A8'], new_tip='never')
+        p300.drop_tip()
+
+    # Step 13: Wash the cells with wash buffer
+    wash(wells)
+
+    # Experiment complete. Proceed with imaging.
+```
+
+This script defines a series of basic protocol steps for immunostaining hMSC cells to visualize E-Cadherin in a 6-well plate format. Please review your laboratory's specific requirements and modify the script accordingly before executing the code on your Opentrons machine.
+
+
+:*************************
+
+

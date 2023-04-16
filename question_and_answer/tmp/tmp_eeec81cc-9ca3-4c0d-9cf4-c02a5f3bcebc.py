@@ -1,0 +1,140 @@
+Sure! Here's an example Python script that uses Opentrons to prepare immunostained hMSC cells to visualize lysosomes:
+
+```
+import opentrons.protocol_api as protocol_api
+
+metadata = {
+    'protocolName': 'Immunostained hMSC cells for visualizing lysosomes',
+    'author': 'Your Name Here',
+    'description': 'Protocol for preparing immunostained hMSC cells in a 6 well plate using Opentrons',
+    'apiLevel': '2.0'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Set up labware
+    tiprack_200ul = protocol.load_labware('opentrons_96_tiprack_300ul', '1')
+    tiprack_20ul = protocol.load_labware('opentrons_96_tiprack_20ul', '2')
+    p200 = protocol.load_instrument('p200_single_gen2', 'right', tip_racks=[tiprack_200ul])
+    p20 = protocol.load_instrument('p20_single_gen2', 'left', tip_racks=[tiprack_20ul])
+    plate_6_well = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '3')
+
+
+    # Define reagents
+    antibody = 'Anti-LAMP1 Antibody'
+    secondary_antibody = 'Alexa Fluor 488 anti-Rabbit IgG Antibody'
+    fixative = '4% Paraformaldehyde'
+    blocking_solution = '5% BSA and 0.3% Triton-X100 in PBS'
+
+
+    # Define pipetting steps
+
+    # Add fixative to wells
+    p200.pick_up_tip()
+    for well in plate_6_well.wells():
+        p200.transfer(500, fixative, well.top(), new_tip='never')
+    p200.drop_tip()
+
+    # Incubate for 30 minutes
+    protocol.delay(minutes=30)
+
+    # Remove fixative and wash wells with PBS
+    for well in plate_6_well.wells():
+        p200.pick_up_tip()
+        p200.transfer(600, well.bottom(1), p200.trash_container.top(), new_tip='never')
+        p200.drop_tip()
+
+    for well in plate_6_well.wells():
+        for i in range(3):
+            p200.pick_up_tip()
+            p200.transfer(1000, protocol.load_labware('nest_12_reservoir_15ml', '4').wells()[0], well.top(), new_tip='never')
+            p200.transfer(1000, well.bottom(1), p200.trash_container.top(), new_tip='never')
+            p200.drop_tip()
+
+    # Add blocking solution to wells
+    for well in plate_6_well.wells():
+        p200.pick_up_tip()
+        p200.transfer(500, blocking_solution, well.top(), new_tip='never')
+        p200.mix(3, 100, well)
+        p200.drop_tip()
+
+    # Incubate for 1 hour
+    protocol.delay(minutes=60)
+
+    # Remove blocking solution and wash wells with PBS
+    for well in plate_6_well.wells():
+        p200.pick_up_tip()
+        p200.transfer(600, well.bottom(1), p200.trash_container.top(), new_tip='never')
+        p200.drop_tip()
+
+    for well in plate_6_well.wells():
+        for i in range(3):
+            p200.pick_up_tip()
+            p200.transfer(1000, protocol.load_labware('nest_12_reservoir_15ml', '4').wells()[0], well.top(), new_tip='never')
+            p200.transfer(1000, well.bottom(1), p200.trash_container.top(), new_tip='never')
+            p200.drop_tip()
+
+    # Add primary antibody to wells
+    for well in plate_6_well.wells():
+        p20.pick_up_tip()
+        p20.transfer(5, antibody, well.top(), new_tip='never')
+        p20.mix(3, 10, well)
+        p20.drop_tip()
+
+    # Incubate for 1 hour
+    protocol.delay(minutes=60)
+
+    # Remove primary antibody and wash wells with PBS
+    for well in plate_6_well.wells():
+        p200.pick_up_tip()
+        p200.transfer(600, well.bottom(1), p200.trash_container.top(), new_tip='never')
+        p200.drop_tip()
+
+    for well in plate_6_well.wells():
+        for i in range(3):
+            p200.pick_up_tip()
+            p200.transfer(1000, protocol.load_labware('nest_12_reservoir_15ml', '4').wells()[0], well.top(), new_tip='never')
+            p200.transfer(1000, well.bottom(1), p200.trash_container.top(), new_tip='never')
+            p200.drop_tip()
+
+    # Add secondary antibody to wells
+    for well in plate_6_well.wells():
+        p20.pick_up_tip()
+        p20.transfer(5, secondary_antibody, well.top(), new_tip='never')
+        p20.mix(3, 10, well)
+        p20.drop_tip()
+
+    # Incubate for 1 hour
+    protocol.delay(minutes=60)
+
+    # Remove secondary antibody and wash wells with PBS
+    for well in plate_6_well.wells():
+        p200.pick_up_tip()
+        p200.transfer(600, well.bottom(1), p200.trash_container.top(), new_tip='never')
+        p200.drop_tip()
+
+    for well in plate_6_well.wells():
+        for i in range(3):
+            p200.pick_up_tip()
+            p200.transfer(1000, protocol.load_labware('nest_12_reservoir_15ml', '4').wells()[0], well.top(), new_tip='never')
+            p200.transfer(1000, well.bottom(1), p200.trash_container.top(), new_tip='never')
+            p200.drop_tip()
+
+    # Add DAPI to wells
+    for well in plate_6_well.wells():
+        p20.pick_up_tip()
+        p20.transfer(2, protocol.load_labware('nest_12_reservoir_15ml', '4').wells()[1], well.top(), new_tip='never')
+        p20.mix(3, 10, well)
+        p20.drop_tip()
+
+    # Incubate for 5 minutes
+    protocol.delay(minutes=5)
+
+    # Done!
+```
+
+Note that this script assumes that you have already loaded all of the required reagents into specific wells in a Nest 12 well reservoir, which is loaded into slot 4 on the OT-2 robot. You may need to modify the script to match your specific reagents and labware. Additionally, you may need to modify the volumes and timings depending on your experimental needs.
+
+
+:*************************
+
+

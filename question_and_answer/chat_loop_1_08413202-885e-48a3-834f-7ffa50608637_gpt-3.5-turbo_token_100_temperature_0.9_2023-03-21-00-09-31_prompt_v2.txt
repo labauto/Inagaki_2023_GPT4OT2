@@ -1,0 +1,69 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Sure, I can help you with that. Here's a sample Python script that uses Opentrons machine to automate the exchange of hMSC cell culture medium using PBS(-) and D-MEM in a 6-well plate:
+
+```
+# Importing Libraries
+from opentrons import labware, instruments
+
+# Defining labware
+plate = labware.load('6-flat', '1')
+tip_rack = labware.load('tiprack-200ul', '2')
+
+# Defining Pipette
+p200 = instruments.Pipette(
+    axis='b',
+    name='p200',
+    max_volume=200,
+    min_volume=20,
+    channels=1,
+    tip_racks=[tip_rack],
+)
+
+# Defining location of the wells
+well_A1 = plate.wells('A1')
+well_B1 = plate.wells('B1')
+well_C1 = plate.wells('C1')
+
+# Perform the transfer
+p200.pick_up_tip()
+p200.aspirate(100, well_A1)
+p200.move_to(well_B1.top())
+p200.dispense(100, well_B1)
+
+p200.aspirate(100, well_B1)
+p200.move_to(well_C1.top())
+p200.dispense(100, well_C1)
+
+p200.aspirate(100, well_C1)
+p200.move_to(well_A1.top())
+p200.dispense(100, well_A1)
+
+
+# Dropping the tip
+p200.drop_tip()
+```
+
+In this script, we first import the necessary libraries to run the Opentrons machine. We defined the labware we will be using, which is a 6-well plate and a tip rack for the pipette. We also defined the pipette we will be using, which has a maximum volume of 200 microliters and a minimum volume of 20 microliters.
+
+Next, we defined the location of the wells we will be transferring liquid to and from. The script then performs a transfer of 100 microliters from well A1 to B1, then from B1 to C1, and finally from C1 back to A1. This procedure simulates the exchange of hMSC cell culture medium using PBS(-) and D-MEM.
+
+Finally, we dropped the tip after performing the transfer. You can adjust the volume and location of the transfer depending on your specific needs.
+
+
+:*************************
+
+

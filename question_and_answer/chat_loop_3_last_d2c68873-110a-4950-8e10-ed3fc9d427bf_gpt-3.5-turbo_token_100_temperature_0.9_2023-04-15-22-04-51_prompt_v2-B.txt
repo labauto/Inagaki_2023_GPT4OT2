@@ -1,0 +1,101 @@
+prompt:*************************
+ I got this error:
+```
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 114, in _parse_python
+    version = get_version(metadata, parsed)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 348, in get_version
+    raise RuntimeError(
+RuntimeError: If this is not an API v1 protocol, you must specify the target api level in the apiLevel key of the metadata. For instance, metadata={"apiLevel": "2.0"}
+
+```
+can you fix it? Make sure you only answer Python script.
+answer:*************************
+Sure, here's a Python script using Opentrons API v2 that prepares immunostained hMSC cells to visualize lysosomes in a 6 well plate:
+
+```python
+import opentrons.protocol_api as api
+
+metadata = {
+    'apiLevel': '2.0',
+    'author': 'Your Name',
+    'description': 'Prepare immunostained hMSC cells to visualize lysosomes in a 6 well plate.'
+}
+
+def run(protocol: api.ProtocolContext):
+
+    # Labware
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '1')
+
+    tiprack_1 = protocol.load_labware('opentrons_96_tiprack_300ul', '2')
+    tiprack_2 = protocol.load_labware('opentrons_96_tiprack_300ul', '3')
+
+    # Pipettes
+    p300 = protocol.load_instrument('p300_single_gen2', 'left', tip_racks=[tiprack_1,tiprack_2])
+
+    # Reagents
+    pbs = protocol.load_labware('usascientific_12_reservoir_22ml', '4') # slot name may differ
+
+    # Commands
+    # Resuspend cells
+    p300.pick_up_tip()
+    p300.aspirate(250, pbs['A1'])
+    p300.dispense(250, plate['A1'])
+    p300.mix(10, 200, plate['A1'])
+    p300.drop_tip()
+
+    # Fix cells
+    for well in plate.wells():
+        p300.pick_up_tip()
+        p300.aspirate(100, pbs['A2'])
+        p300.dispense(100, well)
+        p300.mix(10, 200, well)
+        p300.drop_tip()
+
+    # Permeabilize cells
+    for well in plate.wells():
+        p300.pick_up_tip()
+        p300.aspirate(100, pbs['A3'])
+        p300.dispense(100, well)
+        p300.mix(10, 200, well)
+        p300.drop_tip()
+
+    # Block cells
+    for well in plate.wells():
+        p300.pick_up_tip()
+        p300.aspirate(100, pbs['A4'])
+        p300.dispense(100, well)
+        p300.mix(10, 200, well)
+        p300.drop_tip()
+
+    # Stain cells for Lysosomes
+    for well in plate.wells():
+        p300.pick_up_tip()
+        p300.aspirate(100, pbs['A5'])
+        p300.dispense(100, well)
+        p300.mix(10, 200, well)
+        p300.drop_tip()
+
+    # Wash cells
+    for well in plate.wells():
+        p300.pick_up_tip()
+        p300.aspirate(100, pbs['A6'])
+        p300.dispense(100, well)
+        p300.mix(10, 200, well)
+        p300.drop_tip()
+``` 
+
+Make sure you have the correct labware names and slot positions for your robot.
+
+
+:*************************
+
+

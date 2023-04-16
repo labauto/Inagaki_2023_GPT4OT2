@@ -1,0 +1,64 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Certainly! Here's a Python script that uses the Opentrons API to automate the process of exchanging hMSC cell culture medium using PBS(-) and D-MEM in a 6-well plate:
+
+```python
+from opentrons import labware, instruments, robot
+
+# Define the labware
+plate_6_well = labware.load('6-well-plate', '1')
+trough_1 = labware.load('trough-12row', '2')
+trough_2 = labware.load('trough-12row', '3')
+
+# Define the pipettes
+pipette_300 = instruments.P300_Single(
+    mount='left',
+    tip_racks=[labware.load('opentrons-tiprack-300ul', '4')],
+    trash_container=labware.load('point', '5')
+)
+
+# Define the reagents
+PBS_minus = trough_1.wells('A1')
+D_MEM = trough_2.wells('A1')
+
+# Define the volumes to aspirate and dispense
+volume_to_aspirate = 200
+volume_to_dispense = 200
+
+# Define the transfer method
+def exchange_medium(well_location, from_location, to_location):
+    pipette_300.pick_up_tip()
+    pipette_300.aspirate(volume_to_aspirate, from_location)
+    pipette_300.dispense(volume_to_dispense, well_location)
+    pipette_300.aspirate(volume_to_aspirate, well_location)
+    pipette_300.dispense(volume_to_dispense, to_location)
+    pipette_300.drop_tip()
+
+# Perform the experiment
+for well in plate_6_well.wells():
+    exchange_medium(well, PBS_minus, D_MEM)
+```
+
+This script defines the labware to be used (a 6-well plate, two 12-row troughs, a tip rack, and a trash container) and the pipette to be used (a P300 Single-Channel pipette). It also defines the location and volumes of the reagents to be used (PBS(-) in the first row of trough 1, and D-MEM in the first row of trough 2).
+
+The script then defines a transfer function called `exchange_medium`, which aspirates 200 uL of medium from the from_location, dispenses 200 uL of medium into the well_location, aspirates 200 uL of medium from the well_location, and dispenses 200 uL of medium into the to_location. This function uses the `pipette_300` pipette to perform the transfers, and picks up and drops tips as necessary.
+
+Finally, the script performs the experiment by iterating over all wells in the 6-well plate and using the `exchange_medium` function to exchange the cell culture medium between the PBS(-) and D-MEM solutions.
+
+
+:*************************
+
+

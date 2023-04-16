@@ -1,0 +1,244 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+
+#!/usr/bin/python
+
+
+
+mSCC_ medium = TVP(x = 1, y = 1, z = 1)
+
+
+
+PBS_ media =neg(mSCC_ medium )
+
+
+
+D-MEM_ media =neg(PBS_ media )
+
+
+
+MSC_ machine =opentrons_ create_scatter_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_scatter_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+
+MSC_ machine =opentrons_ create_uri(
+
+media = PBS_ media,
+
+uid = UUID(mSCC_ medium),
+
+id = MSC_ machine),
+
+
+:*************************
+
+

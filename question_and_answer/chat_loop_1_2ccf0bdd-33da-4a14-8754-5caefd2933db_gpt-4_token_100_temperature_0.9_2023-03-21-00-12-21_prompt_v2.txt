@@ -1,0 +1,128 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Sure! Here is a Python script using the Opentrons OT-2 API to do the experiment. First, you'll need to install the Opentrons Python API. You can do this using pip:
+
+```
+pip install opentrons
+```
+
+Once you have the API installed, you can use the following Python script:
+
+```python
+from opentrons import simulate
+import json
+
+protocol_string = '''
+{
+  "labware": {
+    "wellplate": ["corning_6_wellplate_16.8ml_flat", [1, 0]],
+    "pbs_tube_rack": ["opentrons_6_tuberack_falcon_50ml_conical", [3, 0]],
+    "dmem_tube_rack": ["opentrons_6_tuberack_falcon_50ml_conical", [4, 0]],
+    "waste_rack": ["agilent_1_reservoir_290ml", [2, 0]],
+    "tip_rack": ["opentrons_96_tiprack_1000ul", [10, 0]]
+  },
+  "pipettes": {
+    "left_pipette": {
+      "type": "p1000_single",
+      "mount": "left"
+    },
+    "right_pipette": {
+      "type": "p300_single",
+      "mount": "right"
+    }
+  },
+  "procedure": [
+    {
+      "type": "Wells",
+      "id": "A1"
+    }
+  ]
+}
+'''
+
+protocol_data = json.loads(protocol_string)
+metadata = {'apiLevel': '2.9'}
+protocol = simulate.get_protocol_api(metadata["apiLevel"])
+
+# Load labware
+wellplate = protocol.load_labware(*protocol_data['labware']['wellplate'])
+pbs_tube_rack = protocol.load_labware(
+    *protocol_data['labware']['pbs_tube_rack']
+)
+dmem_tube_rack = protocol.load_labware(
+    *protocol_data['labware']['dmem_tube_rack']
+)
+waste_rack = protocol.load_labware(*protocol_data['labware']['waste_rack'])
+tip_rack = protocol.load_labware(*protocol_data['labware']['tip_rack'])
+
+# Load pipettes
+left_pipette_data = protocol_data['pipettes']['left_pipette']
+left_pipette = protocol.load_instrument(
+    left_pipette_data['type'], left_pipette_data['mount'], tip_racks=[tip_rack]
+)
+
+right_pipette_data = protocol_data['pipettes']['right_pipette']
+right_pipette = protocol.load_instrument(
+    right_pipette_data['type'], right_pipette_data['mount']
+)
+
+# Protocol steps
+for step in protocol_data['procedure']:
+    if step["type"] == "Wells":
+        well = wellplate.wells_by_name()[step["id"]]
+        
+        # Aspirate 3ml of cell culture medium into waste
+        left_pipette.pick_up_tip()
+        left_pipette.aspirate(3000, well.bottom(1))
+        left_pipette.dispense(3000, waste_rack.wells()[0].top())
+        left_pipette.blow_out()
+
+        # Wash the well with 3ml of PBS(-)
+        left_pipette.aspirate(3000, pbs_tube_rack.wells_by_name()['A1'].bottom(1))
+        left_pipette.dispense(2000, well.top())
+        left_pipette.blow_out()
+        left_pipette.aspirate(1000, waste_rack.wells()[0].top())
+        left_pipette.dispense(1000, well.top())
+        left_pipette.blow_out()
+
+        # Replace the medium with 3ml of D-MEM
+        left_pipette.aspirate(3000, dmem_tube_rack.wells_by_name()['A1'].bottom(1))
+        left_pipette.dispense(3000, well.top())
+
+        # Dispose of the tips and reset the pipette
+        left_pipette.drop_tip()
+        left_pipette.reset_tip_origin()
+
+protocol.home()  # Return the robot to the home position
+print('Simulation complete!')  # (Optional) Print a completion message
+```
+
+This script assumes you already have a protocol file with the appropriate labware and pipettes defined. It performs the medium exchange for a single well. The script can be further modified or looped to carry out the process for additional wells.
+
+Please note that the specific labware, pipette, and vessel names/locations can be adjusted based on your actual experimental setup.
+
+Save this script as a `.py` file and run it using:
+
+```
+python your_script_name.py
+```
+
+This script will merely simulate your experiment. To run the actual protocol on an OT-2, you'll have to copy the `.py` script to the robot using the Opentrons App, and execute it through the app's protocol management interface.
+
+
+:*************************
+
+

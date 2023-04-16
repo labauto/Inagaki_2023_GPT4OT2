@@ -1,0 +1,67 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Sure, here is an example Python script using the Opentrons API to automate exchanging hMSC cell culture medium using PBS(-) and D-MEM for a 6 well plate. 
+
+Note: This script assumes that the Opentrons robot is calibrated and connected to a computer. 
+
+```python
+from opentrons import protocol_api
+
+# metadata
+metadata = {
+    'apiLevel': '2.2',
+    'protocolName': 'hMSC cell culture medium exchange',
+    'author': 'Your Name',
+    'description': 'Automated medium exchange for hMSC cell culture plates'
+}
+
+# define protocol
+def run(protocol: protocol_api.ProtocolContext):
+
+    # load labware
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '1')
+    tip_rack = protocol.load_labware('opentrons_96_tiprack_300ul', '2')
+
+    # load pipette
+    pipette = protocol.load_instrument('p300_single', 'right', tip_racks=[tip_rack])
+
+    # exchange medium with PBS(-) in every well
+    for well_num in range(1, 7):
+        # aspirate old medium
+        pipette.aspirate(250, plate['A'+str(well_num)].bottom(2))
+        protocol.delay(minutes=2)
+        # dispense PBS(-)
+        pipette.dispense(250, plate['A'+str(well_num)].bottom(2))
+        protocol.delay(minutes=3)
+        # aspirate PBS(-)
+        pipette.aspirate(250, plate['A'+str(well_num)].bottom(2))
+        protocol.delay(minutes=2)
+        # dispense DMEM
+        pipette.dispense(250, plate['A'+str(well_num)].bottom(2))
+        protocol.delay(minutes=3)
+
+    # finish protocol
+    pipette.drop_tip()
+```
+
+This script uses the 'corning_6_wellplate_16.8ml_flat' labware and 'opentrons_96_tiprack_300ul' tip rack. The script loads a p300 single channel pipette and uses it to aspirate and dispense the cell culture medium. The script then loops through each well of the plate, aspirating the old medium, dispensing PBS(-), aspirating the PBS(-), and then finally dispensing DMEM. 
+
+Please note that this script is just an example, and may need to be adjusted based on the specific requirements of your experiment. There may also be additional steps needed to prepare the robot, labware, and pipette before the protocol can be executed.
+
+
+:*************************
+
+

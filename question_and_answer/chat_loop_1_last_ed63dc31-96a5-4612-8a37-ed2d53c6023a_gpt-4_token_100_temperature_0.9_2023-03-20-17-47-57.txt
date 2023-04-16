@@ -1,0 +1,93 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well, use 1 ml of PBS(-).
+2. After washing, add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 1 mL of cell culture medium (DMEM) to the 6 well plate.
+4. Finish the experiment.
+
+Possible Labware and Pipettes (Note that you don't need to trust these items, you can use any labware and pipette you want):
+1. `opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical`
+2. `p1000_single`
+3. `corning_6_wellplate_16.8ml_flat`
+
+When writing scripts, be aware of the following:
+1. Do not aspirate more than pipette's max volume. For example, if you want to aspirate 2000 µL with a p1000_single, you need to split it into two commands.
+2. Check the number of tips you use to avoid running out of tips.
+3. when load_labware('name', slot), you can't declare the same slot twice, you need to use different slots for different labware.
+
+
+
+###
+
+
+
+answer:*************************
+Here's a Python script to run the Opentrons machine according to the protocol steps given:
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'apiLevel': '2.11'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    
+    # Labware
+    trypsin_tube_rack = protocol.load_labware('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', 1)
+    pbs_tube_rack = protocol.load_labware('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', 2)
+    tiprack_1000 = protocol.load_labware('opentrons_96_tiprack_1000ul', 3)
+    well_plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', 4)
+    
+    # Pipette
+    p1000_single = protocol.load_instrument('p1000_single', 'right', tip_racks=[tiprack_1000])
+    
+    # Protocol Steps
+
+    # Step 1: Washing the 6 well plate with PBS(-) by pipetting up and down 5 times.
+    for well in well_plate.wells():
+        p1000_single.pick_up_tip()
+        p1000_single.transfer(
+            1000,
+            pbs_tube_rack['A1'],
+            well,
+            mix_after=(5, 1000),
+            new_tip='never'
+        )
+        p1000_single.blow_out(well.top())
+        p1000_single.drop_tip()
+        
+    # Step 2: Adding 1 ml trypsin solution (0.25%) to the cell culture dish and waiting for 5 minutes.
+    for well in well_plate.wells():
+        p1000_single.transfer(
+            1000,
+            trypsin_tube_rack['A2'],
+            well,
+            new_tip='once'
+        )
+    protocol.delay(minutes=5)
+    
+    # Step 3: Adding 1 mL of cell culture medium (DMEM) to the 6 well plate.
+    for well in well_plate.wells():
+        p1000_single.transfer(
+            1000,
+            trypsin_tube_rack['A3'],
+            well,
+            new_tip='once'
+        )
+        
+    # Step 4: Finishing the experiment.
+    protocol.comment('Experiment Finished.')
+```
+
+This script should work for your desired protocol steps. However, please ensure that the labware and slots are set up according to your specific Opentrons machine configuration.
+
+
+:*************************
+
+

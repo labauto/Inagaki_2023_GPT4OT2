@@ -1,0 +1,149 @@
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'Cell Viability and Cytotoxicity Assay',
+    'author': 'Your Name Here <your.email@example.com>',
+    'description': 'Measurement of viability and cytotoxicity of an adherent cell line, A549 cells, treated with thapsigargin',
+    'apiLevel': '2.0'
+}
+
+# Define robot setup
+def setup_robot_and_labware(robot: protocol_api.ProtocolContext):
+    # Clean the inside of the robot with 70 % ethanol
+    robot.pause("Clean the inside of the robot with 70% ethanol and turn on the HEPA filter at low fan speed for about an hour before seeding the cells on 96 well plate. Continue to keep the HEPA filter turned on during the duration of setting up the robot with the respective labware, dilutions of the drug (thapsigargin)on the second day and addition of the drug on to the 96 well plate")
+
+    # Define the labware
+    plate_96_TC = robot.load_labware("corning_96_wellplate_360ul_flat", 5)
+    tube_rack_15 = robot.load_labware("opentrons_15_tube_rack_falcon_15ml_conical", 6)
+    tube_rack_50 = robot.load_labware("opentrons_10_tube_rack_falcon_4x50ml_6x15ml_conical", 7)
+    tip_rack_10 = robot.load_labware("opentrons_96_tiprack_10ul", 8)
+    tip_rack_200 = robot.load_labware("opentrons_96_tiprack_200ul", 9)
+
+    return [plate_96_TC, tube_rack_15, tube_rack_50, tip_rack_10, tip_rack_200]
+
+# Define the cell seeding step
+def seed_cells(robot: protocol_api.ProtocolContext, plate_96_TC: protocol_api.labware.Labware):
+    # Define the pipettes
+    p10 = robot.load_instrument("p10_single", "right", tip_racks=[tip_rack_10])
+
+    # Take a cell count
+    # Insert here the process you use for counting the cells
+    
+    # Seeds the cells into the wells of the plate
+    for well in plate_96_TC.rows_by_name()["A"]:
+        p10.transfer(6, cell_suspension, well, new_tip='always')
+
+# Define the drug addition step
+def add_drug(robot: protocol_api.ProtocolContext, plate_96_TC: protocol_api.labware.Labware, tube_rack_15: protocol_api.labware.Labware, tube_rack_50: protocol_api.labware.Labware):
+    # Define the pipettes
+    p10 = robot.load_instrument("p10_single", "right", tip_racks=[tip_rack_10])
+    p50 = robot.load_instrument("p50_single", "left", tip_racks=[tip_rack_200])
+
+    # Define the negative control wells
+    negative_controls = plate_96_TC.wells()[:3]
+
+    # Add medium to negative control wells
+    for well in negative_controls:
+        p50.transfer(60, Ham_F12K_medium, well)
+
+    # Define the drug dilution concentrations
+    initial_stocks_concentrations = [1000000, 100000, 10000, 1000, 100, 50, 10]
+    dilutions_concentrations = [1.56, 3.12, 6.24, 12.52, 25, 50, 100, 200, 400, 800, 1600, 2000]
+    
+    # Add thapsigargin to 1.5 mL tubes
+    initial_stocks_tubes = tube_rack_15.cols_by_name()["1"]
+    for tube, concentration in zip(initial_stocks_tubes, initial_stocks_concentrations):
+        p10.transfer(35, f"{concentration} mM Thapsigargin", tube)
+
+    # Prepare 4X dilutions of thapsigargin in tubes C1-D6
+    dilutions_tubes = [tube for col in [tube_rack_50.cols_by_name()[x] for x in ["C", "D"]] for tube in col]
+    dilutions_tubes_concentrations = dilutions_concentrations[:len(dilutions_tubes)]
+    for tube, concentration in zip(dilutions_tubes, dilutions_tubes_concentrations):
+        diluted_volume = 50 - (50 / 4 * concentration)
+        p50.mix(3, 50, tube)
+        p50.aspirate(diluted_volume, Ham_F12K_medium, rate=0.5)
+        p50.dispense(diluted_volume, tube, rate=0.5)
+        p50.mix(3, 50, tube)
+
+    # Prepare 2X dilutions of thapsigargin in tubes C1-D6
+    for idx, tube in enumerate(dilutions_tubes[::2]):
+        p50.transfer(100, Ham_F12K_medium, tube)
+        p50.mix(3, 50, dilutions_tubes[2*idx+1])
+        p50.transfer(100, dilutions_tubes[2*idx+1], tube, mix_after=(3, 50))
+
+    # Add the drug to the plate
+    drug_concentration_wells = plate_96_TC.wells()[:36][::3]
+    for well_idx, well in enumerate(drug_concentration_wells):
+        drug_concentration = dilutions_concentrations[well_idx // 3]
+        p50.transfer(60, dilutions_tubes[well_idx], well, mix_after=(3, 50))
+
+# Define the fluorescence assay step
+def fluorescence_assay(robot: protocol_api.ProtocolContext, plate_96_TC: protocol_api.labware.Labware):
+    # Define the pipettes
+    p10 = robot.load_instrument("p10_single", "right", tip_racks=[tip_rack_10])
+
+    # Add reagent to the wells
+    wells_to_add_reagent = plate_96_TC.rows_by_name()["A"] + plate_96_TC.rows_by_name()["B"] + plate_96_TC.rows_by_name()["C"][:3] + plate_96_TC.rows_by_name()["D"][:3] + plate_96_TC.rows_by_name()["E"][:3] + plate_96_TC.rows_by_name()["F"][:3]
+    for well in wells_to_add_reagent:
+        p10.transfer(15, CellTox_Green_reagent, well, new_tip='always')
+
+    # Incubate the plate in the shaker
+    robot._driver.run_flag.wait()
+    robot._hardware.set_lights(True)
+    robot._hardware.set_lights(False)
+    
+    # Read the fluorescence
+    robot._hardware.home_z()
+    for well in wells_to_add_reagent:
+        robot._hardware.set_lights(True)
+        robot._hardware.serial_command("fluorescence", "on")
+        robot._hardware.serial_command("move", f"{well.coordinates()}t200s1000")
+        robot._hardware.serial_command("fluorescence", "off")
+        robot._hardware.serial_command("spectrometer", "on")
+        robot._hardware.serial_command("spectrometer", "record", "1")
+        robot._hardware.serial_command("spectrometer", "off")
+        robot._hardware.set_lights(False)
+
+# Define the luminescence assay step
+def luminescence_assay(robot: protocol_api.ProtocolContext, plate_96_TC: protocol_api.labware.Labware):
+    # Define the pipettes
+    p50 = robot.load_instrument("p50_single", "left", tip_racks=[tip_rack_200])
+
+    # Add reagent to the wells
+    wells_to_add_reagent = plate_96_TC.wells()[:36][::3] + plate_96_TC.wells()[-3:]
+    for well in wells_to_add_reagent:
+        p50.transfer(80, CellTiter_Glo_reagent, well, new_tip='always')
+    
+    # Incubate the plate in the shaker
+    robot._driver.run_flag.wait()
+    robot._hardware.set_lights(True)
+    robot._hardware.set_lights(False)
+
+    # Read the luminescence
+    robot._hardware.home_z()
+    for well in wells_to_add_reagent:
+        robot._hardware.set_lights(True)
+        robot._hardware.serial_command("luminescence", "on")
+        robot._hardware.serial_command("move", f"{well.coordinates()}t200s1000")
+        robot._hardware.serial_command("luminescence", "off")
+        robot._hardware.serial_command("spectrometer", "on")
+        robot._hardware.serial_command("spectrometer", "record", "1")
+        robot._hardware.serial_command("spectrometer", "off")
+        robot._hardware.set_lights(False)
+
+# Define the main function
+def run(protocol: protocol_api.ProtocolContext):
+    # Robot setup
+    [plate_96_TC, tube_rack_15, tube_rack_50, tip_rack_10, tip_rack_200] = setup_robot_and_labware(protocol)
+
+    # Cell seeding
+    seed_cells(protocol, plate_96_TC)
+
+    # Drug addition
+    add_drug(protocol, plate_96_TC, tube_rack_15, tube_rack_50)
+
+    # Fluorescence assay
+    fluorescence_assay(protocol, plate_96_TC)
+
+    # Luminescence assay
+    luminescence_assay(protocol, plate_96_TC)

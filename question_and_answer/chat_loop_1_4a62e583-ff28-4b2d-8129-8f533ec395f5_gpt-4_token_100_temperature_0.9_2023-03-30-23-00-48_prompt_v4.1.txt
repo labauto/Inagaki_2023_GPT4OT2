@@ -1,0 +1,91 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+We are cultureing hMSC cells (2,500 cells/100 µl) with DMEM in 6 well plates, and we want to make hMSC spheroids (2,500 cells) in 96 well plates with two different conditions, 1) With osteoinduction supplements (OS+) and 2) Without osteoinduction supplements (OS-). For osteoinduction supplements, we use Dexamethasone, Ascorbic acid, and beta-glycerophosphate.
+
+
+For OS(-)
+- use 100 µl medium (DMEM) each well
+For OS(+)
+- use 100 µl medium (DMEM high glucose) each well and add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well.
+
+Write a Python script that does the following:
+- Transfer 100 µl of medium (DMEM) to each well of 96 well plate (OS-)
+- Transfer 100 µl of medium (DMEM high glucose) to each well of 96 well plate (OS+)
+- Add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well of 96 well plate (OS+)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS-)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS+)
+- End
+
+Mmake sure that if the code is long, split the code into multiple tiny functions and use it later in the main function. Ideally, split the experiment into multiple steps, and for each step, write a function that does the step. And then, call the function in the main function.
+
+
+
+###
+
+
+    
+answer:*************************
+Here's a Python script to perform the described experiment using the Opentrons OT-2:
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'hMSC Spheroid Experiment',
+    'author': 'Your Name <your_email@example.com>',
+    'description': 'Transfer hMSC cells and osteoinduction supplements into 96-well plates',
+    'apiLevel': '2.0'
+}
+
+def transfer_medium(pipette, source, plate, volume):
+    for well in plate.wells():
+        pipette.transfer(volume, source, well)
+
+def transfer_supplements(pipette, sources, plate, volumes):
+    for supplement, volume in zip(sources, volumes):
+        pipette.transfer(volume, supplement, plate.wells(), new_tip='always')
+
+def transfer_cells(pipette, source, plate, volume):
+    for well in plate.wells():
+        pipette.transfer(volume, source, well, mix_after=(3, volume / 2))
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Labware
+    medium1 = protocol.load_labware('opentrons_6_tuberack_nest_15ml_conical', 1)
+    medium2 = protocol.load_labware('opentrons_6_tuberack_nest_15ml_conical', 2)
+    supplements_tuberack = protocol.load_labware('opentrons_24_tuberack_nest_1.5ml_snapcap', 3)
+    cell_src = protocol.load_labware('opentrons_6_tuberack_nest_15ml_conical', 4)
+    dest_plate1 = protocol.load_labware('corning_96_wellplate_360ul_flat', 5)
+    dest_plate2 = protocol.load_labware('corning_96_wellplate_360ul_flat', 6)
+
+    # Pipettes
+    p20 = protocol.load_instrument('p20_single_gen2', 'left', tip_racks=protocol.load_labware('opentrons_96_tiprack_20ul', 7))
+    p300 = protocol.load_instrument('p300_single_gen2', 'right', tip_racks=protocol.load_labware('opentrons_96_tiprack_300ul', 8))
+
+    # Reagents
+    dm_lg = medium1.wells()[0]
+    dm = medium2.wells()[0]
+    dex = supplements_tuberack.wells_by_name()['A1']
+    aa = supplements_tuberack.wells_by_name()['A2']
+    bgp = supplements_tuberack.wells_by_name()['A3']
+    hmsc_cells = cell_src.wells()[0]
+
+    # Experiment
+    transfer_medium(p300, dm, dest_plate1, 100)
+    transfer_medium(p300, dm_lg, dest_plate2, 100)
+    transfer_supplements(p20, [dex, aa, bgp], dest_plate2, [0.1, 1, 1])
+    transfer_cells(p300, hmsc_cells, dest_plate1, 100)
+    transfer_cells(p300, hmsc_cells, dest_plate2, 100)
+
+```
+
+This script initializes the necessary labware and pipettes, and then uses several helper functions to perform the various parts of the experiment, such as transferring medium, supplements, and cells to the appropriate wells. Finally, it calls these functions in the required order to execute the experiment.
+
+
+:*************************
+
+

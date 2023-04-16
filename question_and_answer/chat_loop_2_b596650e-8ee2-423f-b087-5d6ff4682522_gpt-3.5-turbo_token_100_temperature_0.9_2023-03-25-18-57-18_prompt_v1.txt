@@ -1,0 +1,28 @@
+prompt:*************************
+ I got this error: ```python
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 110, in _parse_python
+    parsed = ast.parse(protocol_contents, filename=ast_filename)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/ast.py", line 47, in parse
+    return compile(source, filename, mode, flags,
+  File "./question_and_answer/tmp/tmp_ecbd3a32-747f-4e3a-a3cf-23bd303f7471.py", line 1
+    Sure, here's a Python script that should do what you described:
+                                                                  ^
+SyntaxError: EOL while scanning string literal
+
+```, can you fix it? Make sure you only answer Python script. If you don't know how to fix it, say 'I don't know'.
+answer:*************************
+I'm sorry, but I don't see any Python code in your question. Would you please provide the code so that I can help you?
+
+
+:*************************
+
+

@@ -1,0 +1,67 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Sure, here's a sample Python script that uses the Opentrons API to perform an experiment of exchanging hMSC cell culture medium using PBS(-) and D-MEM. Please note that you will need to install the Opentrons API and connect your robot to your computer before running this script.
+
+```python
+from opentrons import labware, instruments, robot
+
+# Define labware and pipettes
+plate = labware.load('corning_6_wellplate_16.8ml_flat', '1')
+p200 = instruments.P300_Single(mount='left', tip_racks=[labware.load('tiprack-200ul', '2')])
+
+# Define reagents
+pbs = labware.load('usascientific_12_reservoir_22ml', '3')['A1']
+dmem = labware.load('usascientific_12_reservoir_22ml', '3')['A2']
+
+# Define transfer volumes and positions
+pbs_vol = 200
+dmem_vol = 500
+source_well = pbs
+dest_wells = [well for well in plate.rows(0)]
+
+# Exchange medium
+for dest_well in dest_wells:
+    # Aspirate old medium with PBS(-)
+    p200.pick_up_tip()
+    p200.transfer(pbs_vol, dest_well, p200.trash_container.top(), new_tip='never')
+    p200.drop_tip()
+    
+    # Wash well with PBS(-)
+    for _ in range(3):
+        p200.pick_up_tip()
+        p200.transfer(pbs_vol, source_well, dest_well, new_tip='never')
+        p200.drop_tip()
+
+    # Aspirate PBS(-) and add D-MEM
+    p200.pick_up_tip()
+    p200.transfer(pbs_vol, dest_well, p200.trash_container.top(), new_tip='never')
+    p200.transfer(dmem_vol, dmem, dest_well, new_tip='always')
+    p200.drop_tip()
+
+# Park robot at home position
+robot.home()
+```
+
+This script assumes that you have a 6-well plate loaded on the robot and that you have already populated it with hMSC cells in medium. The `labware.load` function is used to load the necessary labware, including the 6-well plate, the pipette tip rack, and the reagent reservoirs containing PBS(-) and D-MEM. The `instruments.P300_Single` function is used to declare the use of a single-channel pipette.
+
+The script first defines the volumes and positions for the PBS(-) and D-MEM reagents. Then, a for loop is used to iterate over each well in the 6-well plate. In each iteration, the pipette aspirates and removes the old medium using PBS(-), then washes the well with PBS(-) several times. Finally, the pipette aspirates the remaining PBS(-) and adds D-MEM to the well.
+
+After the experiment is complete, the robot is parked at its home position using the `robot.home()` method.
+
+
+:*************************
+
+

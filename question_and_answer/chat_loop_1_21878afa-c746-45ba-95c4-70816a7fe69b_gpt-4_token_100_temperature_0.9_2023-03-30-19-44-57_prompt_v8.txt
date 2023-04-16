@@ -1,0 +1,98 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+We are cultureing hMSC cells (2,500 cells/100 µl) with DMEM in 6 well plates, and we want to make hMSC spheroids (2,500 cells) in 96 well plates with two different conditions, 1) With osteoinduction supplements (OS+) and 2) Without osteoinduction supplements (OS-). For osteoinduction supplements, we use Dexamethasone, Ascorbic acid, and beta-glycerophosphate.
+
+
+For OS(-)
+- use 100 µl medium (DMEM) each well
+For OS(+)
+- use 100 µl medium (DMEM high glucose) each well and add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well.
+
+Write a Python script that does the following:
+- Transfer 100 µl of medium (DMEM) to each well of 96 well plate (OS-)
+- Transfer 100 µl of medium (DMEM high glucose) to each well of 96 well plate (OS+)
+- Add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well of 96 well plate (OS+)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS-)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS+)
+- End
+
+Mmake sure that if the code is long, split the code into multiple tiny functions and use it later in the main function. Ideally, split the experiment into multiple steps, and for each step, write a function that does the step. And then, call the function in the main function.
+
+
+
+###
+
+
+    
+answer:*************************
+To begin, you'll need to install the Opentrons API for Python. Documentation can be found here: https://docs.opentrons.com/
+
+Once you have the API installed, you can write the following Python script to automate your experiment:
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'apiLevel': '2.11',     # You can adjust the apiLevel according to the version you have installed
+    'protocolName': 'automate_hMSC_experiment'
+}
+
+def transfer_medium(pipette, source, destination_plate, volume):
+    for well in destination_plate.wells():
+        pipette.transfer(volume, source, well)
+
+def transfer_cells(pipette, source, destination_plate, volume):
+    for well in destination_plate.wells():
+        pipette.transfer(volume, source, well)
+
+def add_supplements(pipette, supplements, destination_plate, volumes):
+    for i, supplement in enumerate(supplements):
+        for well in destination_plate.wells():
+            pipette.transfer(volumes[i], supplement, well)
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Labware
+    temp_deck = protocol.load_module('Temperature Module', 10)
+    cell_plate = temp_deck.load_labware('nest_96_wellplate_2ml_deep')
+    medium_plate = protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', 1)
+    supplement_plate = protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', 2)
+    hMSC_dmem = protocol.load_labware('usascientific_12_reservoir_22ml', 3)
+    hMSC_dmem_high_glucose = protocol.load_labware('usascientific_12_reservoir_22ml', 4)
+
+    # Pipettes
+    p_20 = protocol.load_instrument('p20_single_gen2', 'right', tip_racks=[protocol.load_labware('opentrons_96_tiprack_20ul', 5)])
+    p_1000 = protocol.load_instrument('p1000_single_gen2', 'left', tip_racks=[protocol.load_labware('opentrons_96_tiprack_1000ul', 6)])
+
+    # Experiment
+    transfer_medium(p_1000, hMSC_dmem['A1'], medium_plate.columns()[0:6], 100)
+    transfer_medium(p_1000, hMSC_dmem_high_glucose['A1'], medium_plate.columns()[6:], 100)
+
+    dex = supplement_plate['A1']
+    ascorbic_acid = supplement_plate['A2']
+    beta_glycerophosphate = supplement_plate['A3']
+    supplements = [dex, ascorbic_acid, beta_glycerophosphate]
+    volumes = [0.1, 1, 1]
+    add_supplements(p_20, supplements, medium_plate.columns()[6:], volumes)
+
+    hMSC_cells = cell_plate.wells_by_name()['A1']
+    transfer_cells(p_1000, hMSC_cells, medium_plate.columns()[0:6], 100)
+    transfer_cells(p_1000, hMSC_cells, medium_plate.columns()[6:], 100)
+```
+
+This script consists of four helper functions:
+
+1. `transfer_medium` transfers the specified medium to a destination plate.
+2. `transfer_cells` transfers the specified hMSC cells to a destination plate.
+3. `add_supplements` adds the osteoinduction supplements to the destination plate.
+4. `run` loads the Opentrons API context, prepares the labware and pipettes, and performs the experiment steps.
+
+The script will perform your experiment as described, and can be modified for different Opentrons setups depending on your labware and pipettes.
+
+
+:*************************
+
+

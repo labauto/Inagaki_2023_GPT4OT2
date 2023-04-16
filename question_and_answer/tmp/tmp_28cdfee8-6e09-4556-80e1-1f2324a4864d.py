@@ -1,0 +1,131 @@
+# Opentrons script for preparing immunostained hMSC cells to visualize lysosomes
+
+
+# Import required libraries
+from opentrons import protocol_api
+
+
+# metadata
+metadata = {
+    'protocolName': 'Immunostaining of hMSC for lysosome visualization',
+    'author': 'Your Name Here <your.email@yourinstitution.com>',
+    'description': 'Opentrons protocol for preparing immunostained hMSC cells cultured in 6 well plates for visualization of lysosomes, using CellMask and Lysotracker dyes.',
+    'apiLevel': '2.3'
+}
+
+
+# Define protocol
+def run(protocol: protocol_api.ProtocolContext):
+    
+    # Define labware
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '1')
+    tiprack_1000 = protocol.load_labware('opentrons_96_tiprack_1000ul', '2')
+    reservoir = protocol.load_labware('nest_12_reservoir_15ml', '3')
+
+    # Define pipettes
+    p1000 = protocol.load_instrument('p1000_single_gen2', 'right', tip_racks=[tiprack_1000])
+
+    # Define reagents
+    cell_mask = reservoir['A1']
+    lysotracker = reservoir['A2']
+    wash_buffer = reservoir['A3']
+    antibody = reservoir['A4']
+    blocking_buffer = reservoir['A5']
+    
+    # Define volumes
+    cell_mask_vol = 500 # ul
+    lysotracker_vol = 100 # ul
+    wash_buffer_vol = 1000 # ul
+    blocking_buffer_vol = 500 # ul
+    antibody_vol = 100 # ul
+
+    # Protocol steps
+
+    # Step 1: Add 500 ul CellMask to each well of the 6 well plate
+    for well in plate.wells():
+        p1000.pick_up_tip()
+        p1000.transfer(cell_mask_vol, cell_mask, well.top(), new_tip='never')
+        p1000.drop_tip()
+
+    # Step 2: Incubate cells for 5 minutes at room temperature, in dark
+
+    protocol.pause("Cover the plate with aluminum foil and incubate at room temperature for 5 minutes, in dark. Click 'Resume' when done.")
+
+    # Step 3: Add 100 ul Lysotracker to each well of the 6 well plate
+    for well in plate.wells():
+        p1000.pick_up_tip()
+        p1000.transfer(lysotracker_vol, lysotracker, well.top(), new_tip='never')
+        p1000.drop_tip()
+
+    # Step 4: Incubate cells for 30 minutes at 37°C, 5% CO2
+
+    protocol.pause("Place the plate in a cell incubator for 30 minutes at 37°C, 5% CO2. Click 'Resume' when done.")
+
+
+    # Step 5: Remove used medium from the wells and add 1 ml Wash Buffer
+
+    for well in plate.rows()[0]:
+        p1000.pick_up_tip()
+        p1000.aspirate(1000, well.bottom(0.5))
+        p1000.dispense(1000, wash_buffer)
+        p1000.blow_out()
+        p1000.drop_tip()
+
+    # Step 6: Remove Wash Buffer and add 500 ul Blocking Buffer
+
+    for well in plate.wells():
+        p1000.pick_up_tip()
+        p1000.aspirate(1000, well.bottom(0.5))
+        p1000.dispense(1000, protocol.waste_container.top())
+        p1000.drop_tip()
+
+        p1000.pick_up_tip()
+        p1000.transfer(blocking_buffer_vol, blocking_buffer, well.top(), new_tip='never')
+        p1000.drop_tip()
+
+    # Step 7: Incubate cells for 1 hour at room temperature
+
+    protocol.pause("Cover the plate with aluminum foil and incubate at room temperature for 1 hour. Click 'Resume' when done.")
+
+
+    # Step 8: Remove Blocking Buffer and add 100 ul antibody to each well
+
+    for well in plate.wells():
+        p1000.pick_up_tip()
+        p1000.aspirate(blocking_buffer_vol, well.bottom(0.5))
+        p1000.dispense(blocking_buffer_vol, protocol.waste_container.top())
+        p1000.drop_tip()
+
+        p1000.pick_up_tip()
+        p1000.transfer(antibody_vol, antibody, well.top(), new_tip='never')
+        p1000.drop_tip()
+
+    # Step 9: Incubate cells for 1 hour at room temperature
+
+    protocol.pause("Cover the plate with aluminum foil and incubate at room temperature for 1 hour. Click 'Resume' when done.")
+
+
+
+    # Step 10: Remove antibody and add 1 ml Wash Buffer
+
+    for well in plate.rows()[0]:
+        p1000.pick_up_tip()
+        p1000.aspirate(1000, well.bottom(0.5))
+        p1000.dispense(1000, wash_buffer)
+        p1000.blow_out()
+        p1000.drop_tip()
+
+    # Step 11: Remove Wash Buffer and add 1 ml PBS
+
+    for well in plate.rows()[0]:
+        p1000.pick_up_tip()
+        p1000.aspirate(1000, well.bottom(0.5))
+        p1000.dispense(1000, protocol.waste_container.top())
+        p1000.drop_tip()
+
+        p1000.pick_up_tip()
+        p1000.aspirate(1000, well.bottom(0.5))
+        p1000.dispense(1000, protocol.waste_container.top())
+        p1000.drop_tip()
+
+    protocol.comment("Protocol complete!")

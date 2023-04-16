@@ -1,0 +1,82 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging iPS cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+    
+answer:*************************
+
+#imports for opentron script
+from opentrons import robot, containers, instruments
+
+#set robot speed
+robot.head_speed(x=20000, y=20000, z=3000, a=700, b=700)
+
+#deck setup
+tiprack_1000 = containers.load("tiprack-1000ul", 'B1')
+tiprack_200 = containers.load("tiprack-200ul", 'A2')
+source_trough = containers.load("trough-12row", 'C2')
+dest_plate = containers.load("6-well-plate", 'D2')
+
+#pipette setup
+p1000 = instruments.Pipette(
+    axis = 'b',
+    max_volume=1000,
+    tip_racks=[tiprack_1000],
+    min_volume=200,
+    aspirate_speed = 1000,
+    dispense_speed = 1000,
+    )
+
+p200 = instruments.Pipette(
+    axis = 'a',
+    max_volume=200,
+    tip_racks=[tiprack_200],
+    min_volume=20,
+    aspirate_speed = 1000,
+    dispense_speed = 1000,
+    )
+
+#pipette commands
+#aspirate PBS(-) from source trough
+p1000.pick_up_tip()
+p1000.aspirate(1000, source_trough.wells('A1'))
+p1000.drop_tip()
+
+#dispense PBS(-) to all wells on destination plate
+p1000.pick_up_tip()
+for i in range(6):
+    p1000.dispense(1000, dest_plate.wells(i).top())
+p1000.drop_tip()
+
+#aspirate D-MEM from source trough
+p1000.pick_up_tip()
+p1000.aspirate(1000, source_trough.wells('A2'))
+p1000.drop_tip()
+
+#dispense D-MEM to all wells on destination plate
+for i in range(6):
+    p1000.pick_up_tip()
+    p1000.dispense(1000, dest_plate.wells(i).top())
+    p1000.drop_tip()
+
+#aspirate old culture medium from all wells on destination plate
+for i in range(6):
+    p200.pick_up_tip()
+    p200.aspirate(200, dest_plate.wells(i).bottom(3))
+    p200.drop_tip()
+
+robot.home()
+
+
+:*************************
+
+

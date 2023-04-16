@@ -1,0 +1,93 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well, use 1 ml of PBS(-).
+2. After washing, add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 1 mL of cell culture medium (DMEM) to the 6 well plate.
+4. Finish the experiment.
+
+Possible Labware and Pipettes (Note that you don't need to trust these items, you can use any labware and pipette you want):
+1. `opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical`
+2. `p1000_single`
+3. `corning_6_wellplate_16.8ml_flat`
+
+When writing scripts, be aware of the following:
+1. Do not aspirate more than pipette's max volume. For example, if you want to aspirate 2000 µL with a p1000_single, you need to split it into two commands.
+2. Check the number of tips you use to avoid running out of tips.
+3. when load_labware('name', slot), you can't declare the same slot twice, you need to use different slots for different labware.
+
+
+
+###
+
+
+
+answer:*************************
+Sure, here is a Python script that automates the protocol you provided using the labware and pipettes you listed:
+
+```python
+# Import necessary modules
+from opentrons import protocol_api
+
+# Metadata
+metadata = {
+    'protocolName': 'Cell Culture Protocol',
+    'author': 'Your Name Here',
+    'description': 'Automated protocol for washing a 6 well plate and adding trypsin and cell culture medium',
+    'apiLevel': '2.11'
+}
+
+# Protocol run function
+def run(protocol: protocol_api.ProtocolContext):
+    
+    # Load labware
+    tuberack = protocol.load_labware('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '1')
+    wellplate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '2')
+    
+    # Load pipettes
+    p1000 = protocol.load_instrument('p1000_single', 'left', tip_racks=[protocol.load_labware('opentrons_96_tiprack_1000ul', '4')])
+    p300 = protocol.load_instrument('p300_single', 'right', tip_racks=[protocol.load_labware('opentrons_96_tiprack_300ul', '5')])
+
+    # Define volumes and tips
+    wash_vol = 1000  # µL
+    trypsin_vol = 1000  # µL
+    medium_vol = 1000  # µL
+
+    # Wash wellplate with PBS
+    p1000.pick_up_tip()
+    for well in wellplate.rows()[0][:6]:
+        p1000.aspirate(wash_vol, tuberack['A1'])
+        for _ in range(5):
+            p1000.dispense(wash_vol, well)
+            p1000.aspirate(wash_vol, well)
+    p1000.drop_tip()
+
+    # Add trypsin
+    p300.pick_up_tip()
+    for well in wellplate.rows()[0][:6]:
+        p300.aspirate(trypsin_vol, tuberack['A2'])
+        p300.dispense(trypsin_vol, well)
+    protocol.delay(minutes=5)
+    p300.drop_tip()
+
+    # Add cell culture medium
+    p1000.pick_up_tip()
+    for well in wellplate.rows()[0][:6]:
+        p1000.aspirate(medium_vol, tuberack['A3'])
+        p1000.dispense(medium_vol, well)
+    p1000.drop_tip()
+    
+    # Protocol complete
+    protocol.comment('Protocol complete.')
+```
+
+Note that the script uses a different slot for each labware to avoid slot conflicts, and uses tip racks to prevent running out of tips during the experiment.
+
+
+:*************************
+
+

@@ -1,0 +1,92 @@
+Certainly! Here's a Python script that uses the Opentrons API to prepare immunostained iPS cells to visualize E-Cadherin in a 6-well plate:
+
+```
+import opentrons
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'iPS Cell Immunostaining',
+    'author': 'Your Name',
+    'description': 'Prepare immunostained iPS cells to visualize E-Cadherin in a 6-well plate',
+    'apiLevel': '2.9'
+}
+
+# Define the Opentrons robot and tips
+robot = opentrons.simulating.Simulator()
+tips_200 = robot.load_labware('opentrons_96_tiprack_300ul', '1')
+tips_20 = robot.load_labware('opentrons_96_tiprack_20ul', '2')
+
+# Define the sample plate and reagent plate
+sample_plate = robot.load_labware('corning_6_wellplate_16.4ml_flat', '3')
+reagent_plate = robot.load_labware('opentrons_24_tuberack_1.5ml_snapcap', '4')
+
+# Define the pipettes
+pipette_300 = robot.load_instrument('p300_single', mount='right', tip_racks=[tips_200])
+pipette_20 = robot.load_instrument('p20_single', mount='left', tip_racks=[tips_20])
+
+# Define the sample and reagent volumes
+sample_volume = 50   # microliters
+primary_antibody_volume = 10   # microliters
+secondary_antibody_volume = 10   # microliters
+wash_volume = 100   # microliters
+
+# Define the protocol steps
+def run(protocol: protocol_api.ProtocolContext):
+    # Add primary antibody to the sample plate
+    pipette_20.pick_up_tip()
+    for well in sample_plate.wells():
+        pipette_20.transfer(primary_antibody_volume, reagent_plate['A1'], well, new_tip='never')
+    pipette_20.drop_tip()
+
+    # Incubate the sample plate for 1 hour
+    robot.delay(minutes=60)
+
+    # Wash the sample plate with buffer solution
+    for well in sample_plate.wells():
+        pipette_300.pick_up_tip()
+        pipette_300.transfer(wash_volume, reagent_plate['A2'], well, new_tip='never')
+        pipette_300.drop_tip()
+
+    # Add secondary antibody to the sample plate
+    pipette_20.pick_up_tip()
+    for well in sample_plate.wells():
+        pipette_20.transfer(secondary_antibody_volume, reagent_plate['A3'], well, new_tip='never')
+    pipette_20.drop_tip()
+
+    # Incubate the sample plate for 1 hour
+    robot.delay(minutes=60)
+
+    # Wash the sample plate with buffer solution
+    for well in sample_plate.wells():
+        pipette_300.pick_up_tip()
+        pipette_300.transfer(wash_volume, reagent_plate['A2'], well, new_tip='never')
+        pipette_300.drop_tip()
+
+    # Add DAPI stain to the sample plate
+    pipette_20.pick_up_tip()
+    for well in sample_plate.wells():
+        pipette_20.transfer(primary_antibody_volume, reagent_plate['A4'], well, new_tip='never')
+    pipette_20.drop_tip()
+
+    # Incubate the sample plate for 10 minutes
+    robot.delay(minutes=10)
+
+    # Wash the sample plate with buffer solution
+    for well in sample_plate.wells():
+        pipette_300.pick_up_tip()
+        pipette_300.transfer(wash_volume, reagent_plate['A2'], well, new_tip='never')
+        pipette_300.drop_tip()
+
+    # Visualize the cells using a fluorescent microscope
+    print('Cells visualized!')
+
+# Run the protocol
+run(protocol)
+```
+
+This protocol first adds primary antibody to the sample plate, incubates for an hour, then washes the plate with buffer solution. It then adds secondary antibody to the sample plate, incubates for another hour, and washes the plate again. Finally, it adds DAPI stain to the sample plate, incubates for 10 minutes, washes the plate one last time, and then prompts the user to visualize the cells using a fluorescent microscope.
+
+
+:*************************
+
+

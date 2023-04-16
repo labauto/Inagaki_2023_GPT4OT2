@@ -1,0 +1,53 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Prepare immunostained hMSC cells to visualize lysosomes.
+The cell is cultured in 6 well plate.
+    
+answer:*************************
+To get started with running an Opentrons machine using Python, you'll first need to install the Opentrons API. Follow the installation instructions for your desired platform from their website, and then create a new Python script. This script performs the experiment you've described:
+
+```
+import opentrons.execute
+
+protocol = opentrons.execute.get_protocol_api('2.8')
+
+# List proper labware needed for the experiment
+plate_6_well = protocol.load_labware('corning_6_wellplate_16.8ml_flat', 1)
+tiprack_300 = protocol.load_labware('opentrons_96_tiprack_300ul', 2)
+lysozyme_tube = protocol.load_labware('eppendorf_5ml_snapcap', 3)
+
+# Load pipette (Modify the type accroding to your needs)
+pipette = protocol.load_instrument('p300_single_gen2', 'right', tip_racks=[tiprack_300])
+
+# Pick up a tip
+pipette.pick_up_tip()
+
+# Perform the immunostaining of hMSC cells to visualize lysosomes
+for well in plate_6_well.wells():
+    # Transfer lysozyme solution to each well (Change the volume according to your needs)
+    pipette.transfer(100, lysozyme_tube['A1'], well.bottom(2), new_tip='never')
+
+# Dispose of the used tip
+pipette.drop_tip()
+
+# Inform the user that the experiment has been set up successfully
+print("Immunostaining of hMSC cells prepared successfully. Proceed to incubation.")
+```
+
+Remember to replace the labware names, positions, and pipettes with the specific ones you are using in your experiment. Also, it's essential to make sure you have the correct API version specified when getting the protocol API.
+
+Make sure to thoroughly test your script and adjust volumes, intervals, and any other necessary parameters according to your specific experimental protocol.
+
+For more information, consult the Opentrons API and Python protocol documentation:
+
+Opentrons API: https://docs.opentrons.com/
+Opentrons Python Protocol: https://docs.opentrons.com/v2/writing.html
+
+
+:*************************
+
+

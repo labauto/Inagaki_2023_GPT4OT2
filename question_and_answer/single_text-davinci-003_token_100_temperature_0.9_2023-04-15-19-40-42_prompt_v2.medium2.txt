@@ -1,0 +1,65 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and SCM130.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+# Import necessary libraries
+import opentrons 
+
+# Create a new robot
+robot = opentrons.Robot()
+
+# Load the Pipette
+pipette = robot.load_instrument('p10_single', 'right', tip_racks=[])
+
+# Load 6-well plate
+plate = robot.load_labware('6-well-plate', slot='1')
+
+# Set up the source
+source_trough = robot.load_labware('trough-12row', slot='2')
+
+# Set the source of PBS
+source_tube = source_trough.wells('A1')
+
+# Set the destination of PBS
+PBS_dst = plate.wells('A1', 'A2', 'A3', 'B1', 'B2', 'B3')
+
+# Set the source of SCM130
+SCM130_src = source_trough.wells('A2')
+
+# Set the destination of SCM130
+SCM130_dst = plate.wells('C1', 'C2', 'C3', 'D1', 'D2', 'D3')
+
+# Pipette PBS from source to destination
+pipette.pick_up_tip()
+for dst in PBS_dst:
+    pipette.aspirate(200, source_tube)
+    pipette.dispense(200, dst)
+    pipette.blow_out(dst.top())
+pipette.drop_tip()
+
+# Pipette SCM130 from source to destination
+pipette.pick_up_tip()
+for dst in SCM130_dst:
+    pipette.aspirate(200, SCM130_src)
+    pipette.dispense(200, dst)
+    pipette.blow_out(dst.top())
+pipette.drop_tip()
+
+# Home the robot
+robot.home()
+
+
+:*************************
+
+

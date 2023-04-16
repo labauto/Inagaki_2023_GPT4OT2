@@ -1,0 +1,75 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Certainly! To write a Python script that automates the Opentrons machine for your laboratory experiment, you first need to install the Opentrons API. You can install the API by running the following command:
+
+`pip install opentrons`
+
+Here is a Python script that performs your experiment using the Opentrons API:
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'author': 'Your Name',
+    'description': 'Exchanging hMSC cell culture medium using PBS(-) and D-MEM.',
+    'protocolName': 'hMSC Culture Medium Exchange'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Configure labware and pipettes
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', 1)
+    reagent_reservoir = protocol.load_labware('nest_12_reservoir_15ml', 2)
+    p1000 = protocol.load_instrument('p1000_single_gen2', 'left')
+    
+    # Parameters
+    pbs_well_id = 0  # well A1 in the reservoir
+    d_mem_well_id = 1  # well A2 in the reservoir
+    culture_volume_to_exchange = 500
+
+    # Distribute PBS(-)
+    pbs_well = reagent_reservoir.wells()[pbs_well_id]
+    for well in plate.wells():
+        p1000.transfer(culture_volume_to_exchange, pbs_well, well.top(), new_tip='always')
+    
+    # Incubate with PBS(-) - this only simulates the incubation time on the Opentrons robot
+    protocol.delay(minutes=5)  # customize the incubation time as needed
+    
+    # Aspirate PBS(-) and discard
+    waste_well = reagent_reservoir.wells()[11] # well A12 in the reservoir
+    for well in plate.wells():
+        p1000.transfer(culture_volume_to_exchange, well, waste_well.top(), new_tip='always')
+
+    # Distribute D-MEM
+    d_mem_well = reagent_reservoir.wells()[d_mem_well_id]
+    for well in plate.wells():
+        p1000.transfer(culture_volume_to_exchange, d_mem_well, well.top(), new_tip='always')
+```
+
+This script performs the following steps:
+
+1. Configure labware and pipettes, assuming a 6-well plate in slot 1, reagent reservoir in slot 2, and a p1000 pipette.
+2. Set parameters such as PBS(-) and D-MEM well IDs, as well as the volume of culture medium to exchange.
+3. Distribute PBS(-) to each well in the 6-well plate.
+4. Incubate the plate with PBS(-) for the desired duration (default is 5 minutes; you can modify this as needed).
+5. Aspirate the PBS(-) from each well and transfer it to a waste well.
+6. Distribute D-MEM to each well in the 6-well plate.
+
+Please modify this script according to your actual lab configurations and reagent positions. After writing this script, you should test it on the Opentrons app to ensure that it works as expected before performing the experiment.
+
+
+:*************************
+
+

@@ -1,0 +1,47 @@
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'MSC medium exchange',
+    'author': 'Assistant',
+    'description': 'Exchanging hMSC cell culture medium using PBS(-) and SCM130',
+    'apiLevel': '2.10'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Load the 6-well plate on the Opentrons machine
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '1')
+
+    # Define the tips to be used during the experiment
+    tiprack_20ul = protocol.load_labware('opentrons_96_tiprack_20ul', '2')
+    tiprack_300ul = protocol.load_labware('opentrons_96_tiprack_300ul', '3')
+
+    # Define the pipettes to be used during the experiment
+    p20 = protocol.load_instrument('p20_single_gen2', 'right', tip_racks=[tiprack_20ul])
+    p300 = protocol.load_instrument('p300_single_gen2', 'left', tip_racks=[tiprack_300ul])
+
+    # Define the source and destination wells for the PBS(-) and SCM130 solutions
+    pbs_well = plate['A1']
+    scm_well = plate['B1']
+    waste_well = plate['C1']
+
+    # Perform medium exchange for each well in the plate
+    for well in plate.wells():
+        # Aspirate old medium
+        p300.pick_up_tip()
+        p300.aspirate(250, well)
+        p300.dispense(250, waste_well)
+        p300.drop_tip()
+
+        # Wash cells with PBS(-)
+        p300.pick_up_tip()
+        p300.aspirate(250, pbs_well)
+        p300.dispense(250, well)
+        p300.mix(3, 250)
+        p300.drop_tip()
+
+        # Transfer SCM130 to the cells
+        p20.pick_up_tip()
+        p20.aspirate(20, scm_well)
+        p20.dispense(20, well)
+        p20.mix(3, 20)
+        p20.drop_tip()

@@ -1,0 +1,84 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well, use 1 ml of PBS(-).
+2. After washing, add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 1 mL of cell culture medium (DMEM) to the 6 well plate.
+4. Finish the experiment.
+
+Possible Labware and Pipettes (Note that you don't need to trust these items, you can use any labware and pipette you want):
+1. `opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical`
+2. `p1000_single`
+3. `corning_6_wellplate_16.8ml_flat`
+
+When writing scripts, be aware of the following:
+1. Do not aspirate more than pipette's max volume. For example, if you want to aspirate 2000 µL with a p1000_single, you need to split it into two commands.
+2. Check the number of tips you use to avoid running out of tips.
+3. when load_labware('name', slot), you can't declare the same slot twice, you need to use different slots for different labware.
+
+
+
+###
+
+
+
+answer:*************************
+Sure, here's a Python script that will perform the experiment you described using the Opentrons API:
+
+```python
+from opentrons import labware, instruments, robot
+
+# Load the labware
+tiprack_1000 = labware.load('opentrons_1000ul_tiprack', '1')
+plate_6_well =  labware.load('corning_6_wellplate_16.8ml_flat', '4')
+tube_rack = labware.load('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '5')
+
+# Load the pipette
+pipette = instruments.P1000_Single(mount='left', tip_racks=[tiprack_1000])
+
+# Define the protocol steps
+def run_protocol():
+    # Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well use 1 ml of PBS(-).
+    for well in plate_6_well.wells():
+        pipette.pick_up_tip()
+        pipette.mix(5, 1000, tube_rack.wells(0))
+        pipette.aspirate(1000, tube_rack.wells(0))
+        pipette.dispense(1000, well)
+        pipette.mix(5, 1000, well)
+        pipette.drop_tip()
+
+    # After washing, add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+    pipette.pick_up_tip()
+    pipette.aspirate(1000, tube_rack.wells(1))
+    pipette.dispense(1000, plate_6_well.wells('A1'))
+    pipette.mix(5, 1000, plate_6_well.wells('A1'))
+    pipette.drop_tip()
+
+    robot.pause(minutes=5)
+
+    # Then, add 1 mL of cell culture medium (DMEM) to the 6 well plate.
+    for well in plate_6_well.wells():
+        pipette.pick_up_tip()
+        pipette.aspirate(1000, tube_rack.wells(2))
+        pipette.dispense(1000, well)
+        pipette.mix(5, 1000, well)
+        pipette.drop_tip()
+
+# Run the protocol
+run_protocol()
+```
+
+In this script, we first load the required labware (a tip rack, a 6-well plate, and a tube rack) using the Opentrons `labware.load` function, and create a pipette using the `instruments.P1000_Single` function.
+
+Then, we define a series of protocol steps in the `run_protocol` function. These steps involve using the pipette to dispense and aspirate liquid from the various wells and tubes, and waiting for 5 minutes after adding the trypsin solution.
+
+Finally, we call the `run_protocol` function to execute the protocol on the Opentrons robot.
+
+
+:*************************
+
+

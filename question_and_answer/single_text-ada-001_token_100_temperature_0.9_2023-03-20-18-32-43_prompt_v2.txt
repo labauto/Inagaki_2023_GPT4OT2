@@ -1,0 +1,42 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+
+def mediaexchange(medium, PBS(-) o D-MEM),
+
+media: media[medium]['MSC'], media[medium]['PBS']]
+
+{
+
+clipse: opentronframes[media]
+
+}
+
+
+
+def mediaexchange(medium, PBS(0), D-MEM),
+
+media: media[medium]['MSC'], media[medium]['PBS']]
+
+{
+
+ Eclipse: opentronframes[media]
+
+ }
+
+
+:*************************
+
+

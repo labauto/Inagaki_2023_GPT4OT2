@@ -1,0 +1,79 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well, use 1 ml of PBS(-).
+2. After washing, add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 1 mL of cell culture medium (DMEM) to the 6 well plate.
+4. Finish the experiment.
+
+Possible Labware and Pipettes (Note that you don't need to trust these items, you can use any labware and pipette you want):
+1. `opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical`
+2. `p1000_single`
+3. `corning_6_wellplate_16.8ml_flat`
+
+When writing scripts, be aware of the following:
+1. Do not aspirate more than pipette's max volume. For example, if you want to aspirate 2000 µL with a p1000_single, you need to split it into two commands.
+2. Check the number of tips you use to avoid running out of tips.
+3. when load_labware('name', slot), you can't declare the same slot twice, you need to use different slots for different labware.
+
+
+
+###
+
+
+
+answer:*************************
+To write a script to control Opentrons lab robot, we're going to use Opentrons Python API. You can find more information and detailed examples at https://opentrons.com/protocol-library/. Here's the script implementing your protocol steps:
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'apiLevel': '2.11'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Load labware and pipettes
+    tiprack = protocol.load_labware('opentrons_96_tiprack_1000ul', '1')
+    falcon_tuberack = protocol.load_labware('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '2')
+    plate_6_well = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '3')
+    pipette_p1000 = protocol.load_instrument('p1000_single', 'right', tip_racks=[tiprack])
+
+    # Set reagents location
+    pbs = falcon_tuberack.wells_by_name()['A1']
+    trypsin = falcon_tuberack.wells_by_name()['B1']
+    dmem = falcon_tuberack.wells_by_name()['C1']
+
+    # Protocol Steps
+    # Step 1: Wash the 6 well plate with 5 cycles of 1mL PBS(-)
+    for well in plate_6_well.wells():
+        pipette_p1000.pick_up_tip()
+        for i in range(5):
+            pipette_p1000.aspirate(1000, pbs)
+            pipette_p1000.dispense(1000, well)
+        pipette_p1000.drop_tip()
+
+    # Step 2: Add 1mL trypsin solution (0.25%) to each well and wait for 5 minutes
+    for well in plate_6_well.wells():
+        pipette_p1000.transfer(1000, trypsin, well)
+         
+    protocol.delay(minutes=5)
+
+    # Step 3: Add 1 mL of cell culture medium (DMEM) to the 6 well plate
+    for well in plate_6_well.wells():
+        pipette_p1000.transfer(1000, dmem, well)
+    
+    # Step 4: Finish the experiment
+    protocol.comment('Experiment completed!')
+```
+
+This script performs the experiment you described using the designated labware, pipettes, and protocol steps. You can modify the protocol steps as needed for your specific experiment. Make sure to adjust the metadata and placement of labware for your specific robot if necessary.
+
+
+:*************************
+
+

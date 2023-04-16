@@ -1,0 +1,97 @@
+# Import necessary libraries for Opentrons' API and other functions
+from opentrons import labware, instruments, robot
+
+# Load labware for 6 well plate
+plate_name = "corning_6_wellplate_16.8ml_flat"
+if plate_name not in labware.list():
+    labware.create(
+        plate_name,
+        grid=(3, 2),
+        spacing=(18.1, 18.1),
+        diameter=16.8,
+        depth=16.4,
+        volume=16800
+    )
+
+plate = labware.load(plate_name, '1')
+
+# Load labware for reagents
+block_name = 'prepculture_96_aluminumblock_200ul'
+if block_name not in labware.list():
+    labware.create(
+        block_name,
+        grid=(12, 8),
+        spacing=(9, 9),
+        diameter=5.5,
+        depth=24.1,
+        volume=200
+    )
+
+buffers = labware.load(block_name, '2')
+
+tiprack = labware.load('tiprack-200ul', '3')
+
+# Load pipette
+pipette = instruments.P300_Single(
+    mount='right',
+    tip_racks=[tiprack]
+)
+
+# Define reagents and their volumes
+cell_dilution_buffer = buffers.wells('A1')
+fixation_solution = buffers.wells('A2')
+blocking_buffer = buffers.wells('A3')
+primary_antibody = buffers.wells('A4')
+secondary_antibody = buffers.wells('A5')
+
+cell_volume = 100  # In microliters
+buffer_volume = 900  # In microliters
+fixation_volume = 200  # In microliters
+blocking_volume = 200  # In microliters
+primary_volume = 200  # In microliters
+secondary_volume = 200  # In microliters
+
+# Define well locations for cell culture
+cells = plate.wells('A1')
+
+# Define function to perform each step
+def step(cell_solution, buffer_solution, volume):
+    # Add buffer to the cell solution to dilute it
+    pipette.pick_up_tip()
+    pipette.aspirate(buffer_volume, buffer_solution)
+    pipette.dispense(buffer_volume, cell_solution)
+    pipette.mix(3, volume, cell_solution)
+    pipette.drop_tip()
+
+    # Fix the cells
+    pipette.pick_up_tip()
+    pipette.aspirate(fixation_volume, fixation_solution)
+    pipette.dispense(fixation_volume, cell_solution)
+    robot.pause(minutes=20)
+    pipette.drop_tip()
+
+    # Block the cells
+    pipette.pick_up_tip()
+    pipette.aspirate(blocking_volume, blocking_buffer)
+    pipette.dispense(blocking_volume, cell_solution)
+    robot.pause(minutes=1)
+    pipette.drop_tip()
+
+    # Add primary antibody
+    pipette.pick_up_tip()
+    pipette.aspirate(primary_volume, primary_antibody)
+    pipette.dispense(primary_volume, cell_solution)
+    robot.pause(minutes=1)
+    pipette.drop_tip()
+
+    # Add secondary antibody
+    pipette.pick_up_tip()
+    pipette.aspirate(secondary_volume, secondary_antibody)
+    pipette.dispense(secondary_volume, cell_solution)
+    robot.pause(minutes=1)
+    pipette.drop_tip()
+
+# Run the experiment in each well
+for well in plate:
+    # Perform the immunostaining steps
+    step(well, cell_dilution_buffer, cell_volume)

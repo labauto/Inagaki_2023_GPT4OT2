@@ -1,0 +1,64 @@
+
+# Create an Opentrons protocol
+
+from opentrons import protocol_api
+
+# Set up our protocol
+p = protocol_api.Protocol()
+
+# Create our 6 well plate
+plate = p.ref("my_6_well_plate",
+              cont_type="6-flat",
+              storage="cold_4")
+
+# Add four 200 uL pipette tips to the right side of the robot
+p.tip_rack_300_ul.wells("A1").tip_length = 200
+
+# Add the reagents to the robot
+p.load_reagent("PBS", plate.wells("A1"), "200uL")
+p.load_reagent("Primary antibody", plate.wells("A2"), "200uL")
+p.load_reagent("Secondary antibody", plate.wells("A3"), "200uL")
+p.load_reagent("Nuclease free water", plate.wells("A4"), "200uL")
+
+# Add the cells to the 6 well plate
+p.load_sample(plate.wells("A1"), "hMSC cells")
+
+# Mix the cells
+p.mix(plate.wells("A1"), volume="200uL", repetitions=10, rate=1)
+
+# Wash the cells
+p.transfer(source=plate.wells("A1"),
+           dest=plate.wells("A2"),
+           volume="200uL",
+           mix_after=True)
+           
+# Incubate with primary antibody
+p.incubate(plate.wells("A2"), "37C", "20:00")
+
+# Wash the cells
+p.transfer(source=plate.wells("A2"),
+           dest=plate.wells("A3"),
+           volume="200uL",
+           mix_after=True)
+
+# Incubate with secondary antibody
+p.incubate(plate.wells("A3"), "37C", "20:00")
+
+# Wash the cells
+p.transfer(source=plate.wells("A3"),
+           dest=plate.wells("A4"),
+           volume="200uL",
+           mix_after=True)
+
+# Visualize E-Cadherin
+p.fluorescence(plate.wells("A4"), 
+               excitation="488nm",
+               emission="520nm")
+
+# Run the protocol
+p.run()
+
+
+:*************************
+
+

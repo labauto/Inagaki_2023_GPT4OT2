@@ -1,0 +1,63 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Sure, here is a possible Python script to automate the Opentrons machine for this experiment:
+
+```python
+# Import the required packages
+from opentrons import protocol_api
+
+# Define the protocol
+def run(protocol: protocol_api.ProtocolContext):
+    
+    # Define the containers holding the reagents
+    well_plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '1')
+    pbs_tube = protocol.load_labware('opentrons_24_tuberack_nest_1.5ml_snapcap', '2')
+    dmem_tube = protocol.load_labware('opentrons_24_tuberack_nest_1.5ml_snapcap', '3')
+    
+    # Define the pipettes
+    p50_single = protocol.load_instrument('p50_single', mount='right', tip_racks=[protocol.load_labware('opentrons_96_tiprack_10ul', '4')])
+    
+    # Define the steps of the experiment
+    # Step 1: Add 300 uL of PBS(-) to each well, mix and remove
+    for i in range(6):
+        p50_single.pick_up_tip()
+        p50_single.transfer(300, pbs_tube.wells()[0], well_plate.wells()[i], new_tip='never')
+        p50_single.mix(5, 50, well_plate.wells()[i])
+        p50_single.blow_out(well_plate.wells()[i].top())
+        p50_single.aspirate(300, well_plate.wells()[i])
+        p50_single.drop_tip()
+    
+    # Step 2: Add 300 uL of D-MEM to each well
+    for i in range(6):
+        p50_single.pick_up_tip()
+        p50_single.transfer(300, dmem_tube.wells()[0], well_plate.wells()[i], new_tip='never')
+        p50_single.aspirate(300, well_plate.wells()[i])
+        p50_single.drop_tip()
+    
+    # Step 3: End of the protocol
+    protocol.comment('Experiment completed')
+```
+
+This Python script assumes that you have access to a supported version of the Opentrons software and hardware, and that you have calibrated the robot appropriately. The script also uses Opentrons's standard labware and pipettes, but you can modify them according to your specific needs.
+
+The script loads the required labware and pipettes, and defines three steps for the experiment. In step 1, the script adds 300 uL of PBS(-) to each well of a 6-well plate, mixes the solution, removes it, and repeats the process for each well. In step 2, the script adds 300 uL of D-MEM to each well. In step 3, the script comments that the experiment is completed.
+
+You can modify this script according to your specific needs by changing the volumes, the labware, the pipettes, and the steps of the experiment.
+
+
+:*************************
+
+

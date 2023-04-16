@@ -1,0 +1,99 @@
+prompt:*************************
+ I got this error:
+```
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 110, in _parse_python
+    parsed = ast.parse(protocol_contents, filename=ast_filename)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/ast.py", line 47, in parse
+    return compile(source, filename, mode, flags,
+  File "./question_and_answer/tmp/tmp_bac5ebb6-2a47-448f-a7d5-475f636fe7ea.py", line 1
+    Yes, add metadata specifying the API version to the protocol.
+             ^
+SyntaxError: invalid syntax
+
+```
+can you fix it? Make sure you only answer Python script.
+answer:*************************
+Apologies, here's the Python script you requested to run the Opentrons machine for the given experiment:
+
+```python
+# Import Opentrons modules
+from opentrons import protocol_api
+
+# metadata
+metadata = {
+    'protocolName': 'MSC spheroids',
+    'author': 'Your Name',
+    'description': 'Culturing hMSC cells (2500 cells/100 µl) with DMEM in 6 well plates, and making hMSC spheroids in 96 well plates with two different conditions',
+    'apiLevel': '2.1'
+}
+
+# protocol run function, the "protocol" parameter maybe of different type. Check OpenTrons API documentation.
+def run(protocol: protocol_api.ProtocolContext):
+    
+    # Define labware
+    plate6well = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '1')
+    plate96well = protocol.load_labware('corning_96_wellplate_360ul_flat', '2')
+    
+    # Define pipettes
+    p1000 = protocol.load_instrument('p1000_single', 'left', tip_racks=[protocol.load_labware('opentrons_96_tiprack_1000ul', '3')])
+    p20 = protocol.load_instrument('p20_single_gen2', 'right', tip_racks=[protocol.load_labware('opentrons_96_tiprack_20ul', '4')])
+    
+    # Define reagents, you should check if these are the correct wells
+    dexamethasone = 'A1'
+    ascorbic_acid = 'A2'
+    beta_glycerophosphate = 'A3'
+    
+    # Transfer 100 µl of medium (DMEM) to each well of 96 well plate (OS-)
+    for i in plate96well.rows()[0][:6]:
+        p1000.pick_up_tip()
+        p1000.aspirate(100, plate6well['A1'])
+        p1000.dispense(100, i)
+        p1000.drop_tip()
+    
+    # Transfer 100 µl of medium (DMEM high glucose) to each well of 96 well plate (OS+)
+    for i in plate96well.rows()[0][6:]:
+        p1000.pick_up_tip()
+        p1000.aspirate(100, plate6well['A1'])
+        p1000.dispense(100, i)
+        p1000.drop_tip()
+        
+    # Add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) 
+    #to each well of 96 well plate (OS+)
+    for i in plate96well.rows()[0][6:]:
+        p20.pick_up_tip()
+        p20.aspirate(0.1, plate96well[dexamethasone])
+        p20.aspirate(1, plate96well[ascorbic_acid])
+        p20.aspirate(1, plate96well[beta_glycerophosphate])
+        p20.dispense(2.1, i)
+        p20.drop_tip()
+        
+    # Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS-)
+    for i in plate96well.rows()[0][:6]:
+        p1000.pick_up_tip()
+        p1000.aspirate(100, plate6well['A2'])
+        p1000.dispense(100, i)
+        p1000.drop_tip()
+    
+    # Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS+)
+    for i in plate96well.rows()[0][6:]:
+        p1000.pick_up_tip()
+        p1000.aspirate(100, plate6well['A2'])
+        p1000.dispense(100, i)
+        p1000.drop_tip()
+```
+
+Make sure that you update the script with the correct labware specifications and pipette type in accordance with your lab's setup.
+
+
+:*************************
+
+

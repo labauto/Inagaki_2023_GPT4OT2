@@ -1,0 +1,53 @@
+
+# Import the necessary libraries
+import opentrons
+import time
+
+# Connect to the Opentrons robot
+robot = opentrons.Robot()
+
+# Place the 6 well plate on the deck
+plate = robot.load_labware('6-well-plate', '1')
+
+# Place a tiprack on the deck
+tiprack = robot.load_labware('tiprack-200ul', '2')
+
+# Assign the pipette to a variable
+pipette = robot.load_instrument('p300_single', 'left', tip_racks=[tiprack])
+
+# Start the experiment
+robot.pause('Please load the cells in the 6-well plate on the deck')
+
+# Move the pipette to the first well
+pipette.pick_up_tip()
+well_1 = plate.wells('A1')
+pipette.move_to(well_1)
+
+# Dispense 200 µL of the immunostaining solution
+pipette.aspirate(200, well_1)
+pipette.dispense(200, well_1)
+
+# Wait for 30 minutes for the staining to proceed
+time.sleep(1800)
+
+# Dispense 200 µL of the lysosome staining solution
+pipette.aspirate(200, well_1)
+pipette.dispense(200, well_1)
+
+# Wait for 15 minutes for the staining to proceed
+time.sleep(900)
+
+# Dispense 200 µL of the clearing solution
+pipette.aspirate(200, well_1)
+pipette.dispense(200, well_1)
+
+# Move the pipette back to the tiprack
+pipette.return_tip()
+
+# End the experiment
+robot.pause('Experiment is complete!')
+
+
+:*************************
+
+

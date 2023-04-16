@@ -1,0 +1,42 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+We are cultureing hMSC cells (2,500 cells/100 µl) with DMEM in 6 well plates, and we want to make hMSC spheroids (2,500 cells) in 96 well plates with two different conditions, 1) With osteoinduction supplements (OS+) and 2) Without osteoinduction supplements (OS-). For osteoinduction supplements, we use Dexamethasone, Ascorbic acid, and beta-glycerophosphate.
+
+
+For OS(-)
+- use 100 µl medium (DMEM) each well
+For OS(+)
+- use 100 µl medium (DMEM high glucose) each well and add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well.
+
+Write a Python script that does the following:
+- Transfer 100 µl of medium (DMEM) to each well of 96 well plate (OS-)
+- Transfer 100 µl of medium (DMEM high glucose) to each well of 96 well plate (OS+)
+- Add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well of 96 well plate (OS+)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS-)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS+)
+- End
+    
+answer:*************************
+                   
+
+OS(+)
+- use 100 µl medium (DMEM) each well
+OS(-)
+- use 100 µl medium (DMEM high glucose) each well and add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well.
+
+Write a Python script that does the following:
+- Transfer 100 µl of medium (DMEM) to each well of 96 well plate (OS+)
+- Transfer 100 µl of medium (DMEM high glucose) to each well of 96 well plate (OS-)
+- Add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well of 96 well plate (OS+)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS-)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS+)
+- End
+
+
+:*************************
+
+

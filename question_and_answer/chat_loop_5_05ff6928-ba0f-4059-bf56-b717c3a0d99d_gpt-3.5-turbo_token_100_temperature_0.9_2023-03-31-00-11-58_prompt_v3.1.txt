@@ -1,0 +1,38 @@
+prompt:*************************
+ I got this error:
+```
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 114, in _parse_python
+    version = get_version(metadata, parsed)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 348, in get_version
+    raise RuntimeError(
+RuntimeError: If this is not an API v1 protocol, you must specify the target api level in the apiLevel key of the metadata. For instance, metadata={"apiLevel": "2.0"}
+
+```
+can you fix it? Make sure you only answer Python script.
+answer:*************************
+Certainly, you need to add the `apiLevel` key to your metadata dictionary. Here's an example code snippet:
+
+```python
+metadata = {
+    'protocolName': 'My Protocol',
+    'author': 'John Smith',
+    'description': 'An awesome protocol',
+    'apiLevel': '2.0'
+}
+```
+
+Replace `"My Protocol"`, `"John Smith"`, `"An awesome protocol"` with your own protocol's name, author name, and description, respectively. Make sure to include the `apiLevel` key with a value of `"2.0"`.
+
+
+:*************************
+
+

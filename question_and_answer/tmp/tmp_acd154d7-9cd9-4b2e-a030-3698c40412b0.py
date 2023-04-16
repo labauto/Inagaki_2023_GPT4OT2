@@ -1,0 +1,64 @@
+from opentrons import robot, containers, instruments
+
+# setup
+robot.connect()
+
+# define plates and pipettes
+plate_6well = containers.load('6-well-plate', 'A1')
+pipette300 = instruments.P300_Single(mount='right', aspirate_flow_rate=300)
+
+# prepare the medium
+pipette300.pick_up_tip()
+pipette300.aspirate(volume=300, location=containers.load('point', 'B1'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A1'))
+pipette300.aspirate(volume=300, location=containers.load('point', 'B2'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A2'))
+pipette300.aspirate(volume=300, location=containers.load('point', 'B3'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A3'))
+pipette300.aspirate(volume=300, location=containers.load('point', 'B4'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A4'))
+pipette300.aspirate(volume=300, location=containers.load('point', 'B5'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A5'))
+pipette300.aspirate(volume=300, location=containers.load('point', 'B6'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A6'))
+pipette300.drop_tip()
+
+# exchange the medium
+pipette300.pick_up_tip()
+pipette300.aspirate(volume=300, location=plate_6well.wells('A1'))
+pipette300.dispense(volume=300, location=containers.load('point', 'C1'))
+pipette300.aspirate(volume=300, location=plate_6well.wells('A2'))
+pipette300.dispense(volume=300, location=containers.load('point', 'C2'))
+pipette300.aspirate(volume=300, location=plate_6well.wells('A3'))
+pipette300.dispense(volume=300, location=containers.load('point', 'C3'))
+pipette300.aspirate(volume=300, location=plate_6well.wells('A4'))
+pipette300.dispense(volume=300, location=containers.load('point', 'C4'))
+pipette300.aspirate(volume=300, location=plate_6well.wells('A5'))
+pipette300.dispense(volume=300, location=containers.load('point', 'C5'))
+pipette300.aspirate(volume=300, location=plate_6well.wells('A6'))
+pipette300.dispense(volume=300, location=containers.load('point', 'C6'))
+pipette300.drop_tip()
+
+# add new medium
+pipette300.pick_up_tip()
+pipette300.aspirate(volume=300, location=containers.load('point', 'D1'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A1'))
+pipette300.aspirate(volume=300, location=containers.load('point', 'D2'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A2'))
+pipette300.aspirate(volume=300, location=containers.load('point', 'D3'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A3'))
+pipette300.aspirate(volume=300, location=containers.load('point', 'D4'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A4'))
+pipette300.aspirate(volume=300, location=containers.load('point', 'D5'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A5'))
+pipette300.aspirate(volume=300, location=containers.load('point', 'D6'))
+pipette300.dispense(volume=300, location=plate_6well.wells('A6'))
+pipette300.drop_tip()
+
+# disconnect
+robot.disconnect()
+
+
+:*************************
+
+

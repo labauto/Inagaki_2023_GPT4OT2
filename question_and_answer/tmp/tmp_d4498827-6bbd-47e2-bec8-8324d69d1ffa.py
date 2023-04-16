@@ -1,0 +1,107 @@
+# Import necessary modules
+from opentrons import protocol_api
+
+# Metadata
+metadata = {
+    'protocolName': 'Viability and Cytotoxicity Assay',
+    'author': 'Your Name Here',
+    'description': 'Measurement of viability and cytotoxicity of an adherent cell line, A549 cells, treated with thapsigargin',
+    'created': '2021-11-03'
+}
+
+# Initialize protocol
+def run(protocol: protocol_api.ProtocolContext):
+
+    # Set temperature module to 37°C
+    temp_mod = protocol.module_hub.load_module('temperature module gen2', '7')
+    temp_mod.set_temperature(37)
+
+    # Load labware
+    plate = protocol.load_labware('corning_96_wellplate_360ul_flat', '1')
+    tube_rack_1 = protocol.load_labware('opentrons_24_tuberack_nest_1.5ml_snapcap', '2')
+    tube_rack_2 = protocol.load_labware('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '3')
+    tiprack_10 = protocol.load_labware('opentrons_96_tiprack_10ul', '4')
+    tiprack_200 = protocol.load_labware('opentrons_96_tiprack_200ul', '5')
+    tube_rack_3 = protocol.load_labware('opentrons_24_tuberack_nest_1.5ml_snapcap', '6')
+
+    # Define pipettes
+    p10 = protocol.load_instrument('p10_single', mount='left', tip_racks=[tiprack_10])
+    p200 = protocol.load_instrument('p200_single', mount='right', tip_racks=[tiprack_200])
+
+    # Define reagent and tip positions
+    ham_f12k = tube_rack_2.wells_by_name()['A1']
+    celltox_green = tube_rack_2.wells_by_name()['B2']
+    cell_titer_glo = tube_rack_2.wells_by_name()['B1']
+
+    thapsigargin_stocks = [well for well in tube_rack_1.rows()[0] if well != tube_rack_1.wells_by_name()['D1']]
+    thapsigargin_4x_concs = tube_rack_3.rows()[0][:6]
+    thapsigargin_2x_concs = tube_rack_3.rows()[1][:6]
+
+    # Add cells to plate
+    p10.transfer(6, ham_f12k, plate.rows()[0][:6], blow_out=True)
+
+    cell_count = 8000
+    cell_vol = (cell_count / 1e6) * 60
+
+    for column in plate.columns()[:6]:
+        p200.transfer(cell_vol, ham_f12k, column, blow_out=True)
+
+    # Add negative controls (medium only)
+    p200.transfer(60, ham_f12k, plate.columns_by_name()['A'][:3] + plate.columns_by_name()['B'][:3] + plate.columns_by_name()['C'][:3], blow_out=True)
+
+    # Add 4x thapsigargin concentrations
+    for conc, tube in zip(thapsigargin_stocks, thapsigargin_4x_concs):
+        p10.pick_up_tip()
+        p10.mix(3, 10, conc)
+        p10.aspirate(5, conc)
+        p10.dispense(5, tube)
+        p10.aspirate(12.5, ham_f12k)
+        p10.dispense(12.5, tube)
+        p10.mix(3, 10, tube)
+        p10.blow_out()
+        p10.drop_tip()
+
+    # Add 2x thapsigargin concentrations
+    for conc, source, dest in zip(thapsigargin_stocks, thapsigargin_4x_concs, thapsigargin_2x_concs):
+        p200.transfer(100, ham_f12k, dest)
+        p200.transfer(100, source, dest)
+        p200.mix(3, 200, dest)
+        p200.blow_out()
+
+    # Add thapsigargin to plate
+    plate_conc_wells = {}
+    for well in plate.columns()[0]:
+        if well == plate.wells_by_name()['A5']:
+            plate_conc_wells[well] = thapsigargin_2x_concs[0]
+        elif well == plate.wells_by_name()['D4']:
+            plate_conc_wells[well] = thapsigargin_2x_concs[-1]
+        else:
+            plate_conc_wells[well] = None
+
+    for row in plate.rows():
+        for well, conc in zip(row[:6], thapsigargin_2x_concs):
+            if plate_conc_wells[well]:
+                p200.transfer(60, plate_conc_wells[well], well, blow_out=True)
+
+    # Incubate cells with thapsigargin
+    protocol.delay(minutes=15)
+
+    # Measure cell viability
+    for row in plate.rows()[:4]:
+        p20 = protocol.load_instrument('p20_single_gen2', mount='left', tip_racks=[tiprack_10])
+        p20.transfer(15, celltox_green, row)
+        protocol.delay(minutes=0.5)
+        temp_mod.set_temperature(25)
+        protocol.delay(minutes=15)
+        temp_mod.set_temperature(37)
+        for well in row:
+            protocol._comment('Reading fluorescence for well {}'.format(well))
+        temp_mod.wait_for_temp()
+        temp_mod.deactivate()
+
+    # Measure cell viability
+    for row in plate.rows()[:4]:
+        p200.transfer(80, cell_titer_glo, row)
+        protocol.delay(minutes=10)
+        for well in row:
+            protocol._comment('Reading luminescence for well {}'.format(well))

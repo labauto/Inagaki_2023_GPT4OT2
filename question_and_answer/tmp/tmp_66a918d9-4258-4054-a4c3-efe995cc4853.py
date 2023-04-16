@@ -1,0 +1,58 @@
+Sure, here is a Python script that can accomplish the described experiment using the Opentrons machine.
+
+```
+# Import necessary modules
+
+from opentrons import labware, instruments, robot
+
+# Load labware
+plate_6_well = labware.load('corning_6_wellplate_16.8ml_flat', '1')
+reservoir = labware.load('axygen_12_reservoir_22ml', '2')
+
+# Load instruments
+pipette = instruments.P300_Single(
+    mount='left',
+    tip_racks=[labware.load('opentrons_96_tiprack_300ul', '3')],
+)
+
+# Define function to distribute reagents to wells
+def distribute_reagent(reagent, volume, source_well, dest_wells):
+    pipette.distribute(volume, reagent.wells(source_well), [well.top() for well in dest_wells])
+
+# Add 100ul of PBS to each well to wash cells
+pipette.pick_up_tip()
+for well in plate_6_well.wells():
+    pipette.transfer(100, reservoir['A1'].bottom(3), well.top(), new_tip='never')
+pipette.drop_tip()
+
+# Add 200ul of 4% paraformaldehyde in PBS to fix cells
+pipette.pick_up_tip()
+for well in plate_6_well.wells():
+    pipette.transfer(200, reservoir['A2'].bottom(3), well.top(), new_tip='never')
+pipette.drop_tip()
+
+# Add 200ul of methanol to permeabilize cells
+pipette.pick_up_tip()
+for well in plate_6_well.wells():
+    pipette.transfer(200, reservoir['A3'].bottom(3), well.top(), new_tip='never')
+pipette.drop_tip()
+
+# Add blocking solution (5% BSA in PBS) to each well
+distribute_reagent(reservoir, 100, 'A4', plate_6_well.columns())
+
+# Add primary antibody (anti-LAMP-1) to each well
+distribute_reagent(reservoir, 100, 'A5', plate_6_well.columns())
+
+# Add secondary antibody (FITC-conjugated goat anti-mouse IgG) to each well
+distribute_reagent(reservoir, 100, 'A6', plate_6_well.columns())
+
+# Mount the plate on Opentrons machine and run the script
+robot.comment("Beginning experiment!")
+```
+
+This script will wash, fix, permeabilize, block, and stain iPS cells to visualize lysosomes using Opentrons machine.
+
+
+:*************************
+
+

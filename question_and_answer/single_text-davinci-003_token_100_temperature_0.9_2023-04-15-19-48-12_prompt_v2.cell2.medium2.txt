@@ -1,0 +1,56 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging iPS cell culture medium using PBS(-) and SCM130.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+    
+answer:*************************
+
+# import libraries
+from opentrons import robot, containers, instruments
+
+# Initialize robot
+robot.connect()
+robot.home()
+
+# Set up containers 
+container_6_well = containers.load('6-Well', 'A1')
+pbs_container = containers.load('tube-rack-2ml', 'B1')
+scm130_container = containers.load('tube-rack-2ml', 'C1')
+
+# Set up pipettes
+pipette_left = instruments.Pipette(
+    axis="b",
+    name='p300-Single',
+    max_volume=300,
+    min_volume=20,
+    channels=1
+)
+
+# Pipette transfer
+pipette_left.pick_up_tip()
+
+for i in range(6):
+    pipette_left.aspirate(300, container_6_well.wells(i)) # aspirate medium from 6 well plate
+    pipette_left.dispense(300, pbs_container.wells(i)) # dispense medium to PBS(-)
+    pipette_left.aspirate(300, pbs_container.wells(i)) # aspirate medium from PBS(-)
+    pipette_left.dispense(300, scm130_container.wells(i)) # dispense medium to SCM130
+
+# Return tips to the racks
+pipette_left.return_tip()
+
+# Disconnect robot
+robot.disconnect()
+
+
+:*************************
+
+

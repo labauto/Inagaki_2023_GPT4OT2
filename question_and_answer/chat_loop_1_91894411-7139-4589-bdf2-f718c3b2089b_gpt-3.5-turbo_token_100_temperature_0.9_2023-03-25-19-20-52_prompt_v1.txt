@@ -1,0 +1,82 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well, use 1 ml of PBS(-).
+2. After washing, add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 1 mL of cell culture medium (DMEM) to the 6 well plate.
+4. Finish the experiment.
+
+Possible Labware and Pipettes (Note that you don't need to trust these items, you can use any labware and pipette you want):
+1. `opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical`
+2. `p1000_single`
+3. `corning_6_wellplate_16.8ml_flat`
+
+When writing scripts, be aware of the following:
+1. Do not aspirate more than pipette's max volume. For example, if you want to aspirate 2000 µL with a p1000_single, you need to split it into two commands.
+2. Check the number of tips you use to avoid running out of tips.
+3. when load_labware('name', slot), you can't declare the same slot twice, you need to use different slots for different labware.
+
+
+
+###
+
+
+
+answer:*************************
+Sure, here's the Python script that will run the experiment you described:
+
+```python
+from opentrons import labware, instruments, robot
+
+# Load labware
+tube_rack = labware.load('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '1')
+plate = labware.load('corning_6_wellplate_16.8ml_flat', '2')
+
+# Load pipettes
+pipette_1000 = instruments.P1000_Single(mount='right')
+
+# Define volumes
+PBS_volume = 1000  # µL
+trypsin_volume = 1000  # µL
+medium_volume = 1000  # µL
+
+# Define commands
+def wash_plate():
+    pipette_1000.pick_up_tip()
+    for well in plate.wells():
+        pipette_1000.aspirate(PBS_volume, tube_rack.wells('A1'))
+        pipette_1000.dispense(PBS_volume, well)
+        pipette_1000.aspirate(PBS_volume, well)
+        pipette_1000.dispense(PBS_volume, well)
+    pipette_1000.drop_tip()
+
+def add_trypsin():
+    pipette_1000.pick_up_tip()
+    for well in plate.wells():
+        pipette_1000.aspirate(trypsin_volume, tube_rack.wells('A2'))
+        pipette_1000.dispense(trypsin_volume, well)
+    pipette_1000.drop_tip()
+
+def add_medium():
+    pipette_1000.pick_up_tip()
+    for well in plate.wells():
+        pipette_1000.aspirate(medium_volume, tube_rack.wells('A3'))
+        pipette_1000.dispense(medium_volume, well)
+    pipette_1000.drop_tip()
+
+# Run the commands
+wash_plate()
+robot.pause("Please wait for 5 minutes after adding trypsin solution.")
+add_medium()
+```
+
+You will need to copy and paste this into the Opentrons Protocol Designer software which can be found on their website. I hope this helps you get started with running experiments on the Opentrons machine! Let me know if you have any further questions or concerns.
+
+
+:*************************
+
+

@@ -1,0 +1,72 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Prepare immunostained hMSC cells to visualize lysosomes.
+The cell is cultured in 6 well plate.
+    
+answer:*************************
+Certainly! Here's an example Python script that uses the Opentrons API to prepare immunostained hMSC cells for visualization of lysosomes:
+
+```
+from opentrons import labware, instruments, robot
+
+# Load the labware
+plate = labware.load('6-well-plate', '1')
+
+# Define the instruments
+pipette = instruments.P300_Single(mount='left')
+
+# Define the reagents
+primary_antibody = 'A647-conjugated anti-lysosome antibody'
+secondary_antibody = 'FITC-conjugated anti-rabbit IgG'
+DAPI_stain = 'DAPI nuclear stain'
+
+# Define the volumes for each step
+primary_volume = 50
+secondary_volume = 50
+DAPI_volume = 10
+
+# Define the positions of the cells in the plate
+cell_positions = [(i, j) for i in range(1, 7) for j in range(1, 3)]
+
+# Function to add reagents to cells
+def add_reagents_to_cells(cell_position):
+    pipette.pick_up_tip()
+    pipette.aspirate(primary_volume, primary_antibody)
+    pipette.dispense(primary_volume, plate.cell(cell_position).top())
+    pipette.aspirate(secondary_volume, secondary_antibody)
+    pipette.dispense(secondary_volume, plate.cell(cell_position).top())
+    pipette.drop_tip()
+
+# Function to add DAPI stain to cells
+def add_dapi_to_cells(cell_position):
+    pipette.pick_up_tip()
+    pipette.aspirate(DAPI_volume, DAPI_stain)
+    pipette.dispense(DAPI_volume, plate.cell(cell_position).bottom())
+    pipette.touch_tip()
+    pipette.drop_tip()
+
+# Move the robot to the home position
+robot.home()
+
+# Add primary and secondary antibodies to the cells
+for cell_position in cell_positions:
+    add_reagents_to_cells(cell_position)
+
+# Add DAPI stain to the cells
+for cell_position in cell_positions:
+    add_dapi_to_cells(cell_position)
+
+# Move the robot back to the home position
+robot.home()
+```
+
+This script assumes that you have a 6-well plate loaded on slot 1 of your Opentrons machine, and that your antibodies and DAPI stain are loaded into compatible labware on the other slots. Replace the variables `primary_antibody`, `secondary_antibody`, `DAPI_stain`, and `cell_positions` with your own reagents and cell positions, and adjust the volumes as necessary for your experiment.
+
+
+:*************************
+
+

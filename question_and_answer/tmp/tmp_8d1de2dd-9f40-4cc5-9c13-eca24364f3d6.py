@@ -1,0 +1,67 @@
+Sure, I can help you with that Python script for Opentrons.
+
+Here's an example script for exchanging hMSC cell culture medium using PBS(-) and D-MEM in a 6 well plate:
+
+```
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'hMSC Medium Exchange',
+    'author': 'Your Name <your.email@address.com>',
+    'description': 'Exchanging hMSC cell culture medium using PBS(-) and D-MEM',
+    'apiLevel': '2.11'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+
+    # Labware
+    tips_200 = protocol.load_labware('opentrons_96_filtertiprack_200ul', '1')
+    pbs_reservoir = protocol.load_labware('nest_12_reservoir_15ml', '2')
+    dmem_reservoir = protocol.load_labware('nest_12_reservoir_15ml', '3')
+    six_well_plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '4')
+
+    # Pipettes
+    pipette = protocol.load_instrument('p300_single_gen2', 'right', tip_racks=[tips_200])
+
+    # Protocol
+    pbs_wells = pbs_reservoir.wells_by_name()
+    dmem_wells = dmem_reservoir.wells_by_name()
+
+    # Exchange medium for each well in the 6 well plate
+    for well_id in six_well_plate.wells_by_name():
+
+        # Aspirate old medium and discard
+        pipette.pick_up_tip()
+        pipette.aspirate(250, six_well_plate[well_id])
+        pipette.dispense(250, pbs_wells['A1'])
+        pipette.blow_out()
+        pipette.drop_tip()
+
+        # Wash cells with PBS(-)
+        pipette.pick_up_tip()
+        pipette.aspirate(200, pbs_wells['A1'])
+        pipette.dispense(200, six_well_plate[well_id])
+        pipette.mix(3, 200)
+        pipette.aspirate(200, six_well_plate[well_id])
+        pipette.dispense(200, pbs_wells['A1'])
+        pipette.blow_out()
+        pipette.drop_tip()
+
+        # Add fresh D-MEM
+        pipette.pick_up_tip()
+        pipette.aspirate(240, dmem_wells['A1'])
+        pipette.dispense(240, six_well_plate[well_id])
+        pipette.blow_out()
+        pipette.drop_tip()
+```
+
+Remember that for the script to work, you need to have the Opentrons Python API installed. You can find more information on how to do this in the official Opentrons API documentation: https://docs.opentrons.com/v2/
+
+Make sure to have the appropriate labware definitions (e.g., 'corning_6_wellplate_16.8ml_flat', 'nest_12_reservoir_15ml', and 'opentrons_96_filtertiprack_200ul'), pipettes, and Opentrons API version installed in your Opentrons machine.
+
+This script assumes you have PBS(-) in the first well of the second labware (`pbs_reservoir`) and D-MEM in the first well of the third labware (`dmem_reservoir`). If the locations are different, you will need to adjust the well references in the `pbs_wells` and `dmem_wells` variables accordingly.
+
+
+:*************************
+
+

@@ -1,0 +1,102 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well, use 1 ml of PBS(-).
+2. After washing, add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 1 mL of cell culture medium (DMEM) to the 6 well plate.
+4. Finish the experiment.
+
+Possible Labware and Pipettes (Note that you don't need to trust these items, you can use any labware and pipette you want):
+1. `opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical`
+2. `p1000_single`
+3. `corning_6_wellplate_16.8ml_flat`
+
+When writing scripts, be aware of the following:
+1. Do not aspirate more than pipette's max volume. For example, if you want to aspirate 2000 µL with a p1000_single, you need to split it into two commands.
+2. Check the number of tips you use to avoid running out of tips.
+3. when load_labware('name', slot), you can't declare the same slot twice, you need to use different slots for different labware.
+
+
+
+###
+
+
+
+answer:*************************
+from opentrons import robot, labware, instruments
+
+
+# labware setup
+# load labware to the robot
+plate = labware.load('corning_6_wellplate_16.8ml_flat', 1)
+tray = labware.load('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', 2)
+
+# pipette setup
+# load pipette to the robot
+p1000 = instruments.P1000_Single(mount='left', tip_racks=[tray['A1']])
+
+# commands
+# wash the 6 well plate with PBS(-) by pipetting up and down 5 times
+p1000.set_flow_rate(aspirate=200, dispense=200)
+p1000.pick_up_tip()
+for i in range(5):
+    p1000.aspirate(1000, plate['A1'])
+    p1000.dispense(1000, plate['A1'])
+    p1000.aspirate(1000, plate['B1'])
+    p1000.dispense(1000, plate['B1'])
+    p1000.aspirate(1000, plate['C1'])
+    p1000.dispense(1000, plate['C1'])
+    p1000.aspirate(1000, plate['D1'])
+    p1000.dispense(1000, plate['D1'])
+    p1000.aspirate(1000, plate['E1'])
+    p1000.dispense(1000, plate['E1'])
+    p1000.aspirate(1000, plate['F1'])
+    p1000.dispense(1000, plate['F1'])
+p1000.drop_tip()
+
+# add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes
+p1000.set_flow_rate(aspirate=200, dispense=200)
+p1000.pick_up_tip()
+p1000.aspirate(1000, tray['A2'])
+p1000.dispense(1000, plate['A1'])
+p1000.aspirate(1000, tray['A2'])
+p1000.dispense(1000, plate['B1'])
+p1000.aspirate(1000, tray['A2'])
+p1000.dispense(1000, plate['C1'])
+p1000.aspirate(1000, tray['A2'])
+p1000.dispense(1000, plate['D1'])
+p1000.aspirate(1000, tray['A2'])
+p1000.dispense(1000, plate['E1'])
+p1000.aspirate(1000, tray['A2'])
+p1000.dispense(1000, plate['F1'])
+p1000.drop_tip()
+robot.pause(minutes=5)
+
+# add 1 mL of cell culture medium (DMEM) to the 6 well plate
+p1000.set_flow_rate(aspirate=200, dispense=200)
+p1000.pick_up_tip()
+p1000.aspirate(1000, tray['A3'])
+p1000.dispense(1000, plate['A1'])
+p1000.aspirate(1000, tray['A3'])
+p1000.dispense(1000, plate['B1'])
+p1000.aspirate(1000, tray['A3'])
+p1000.dispense(1000, plate['C1'])
+p1000.aspirate(1000, tray['A3'])
+p1000.dispense(1000, plate['D1'])
+p1000.aspirate(1000, tray['A3'])
+p1000.dispense(1000, plate['E1'])
+p1000.aspirate(1000, tray['A3'])
+p1000.dispense(1000, plate['F1'])
+p1000.drop_tip()
+
+# finish the experiment
+robot.home()
+
+
+:*************************
+
+

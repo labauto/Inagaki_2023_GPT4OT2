@@ -1,0 +1,28 @@
+prompt:*************************
+ I got this error: ```python
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 110, in _parse_python
+    parsed = ast.parse(protocol_contents, filename=ast_filename)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/ast.py", line 47, in parse
+    return compile(source, filename, mode, flags,
+  File "./question_and_answer/tmp/tmp_0d354793-6f07-4186-b7be-c3a62fa41ec4.py", line 1
+    I don't know
+      ^
+SyntaxError: invalid syntax
+
+```, can you fix it? Make sure you only answer Python script. If you don't know how to fix it, say 'I don't know'.
+answer:*************************
+I don't know
+
+
+:*************************
+
+

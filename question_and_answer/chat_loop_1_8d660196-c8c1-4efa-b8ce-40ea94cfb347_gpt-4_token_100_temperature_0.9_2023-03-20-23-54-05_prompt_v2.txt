@@ -1,0 +1,79 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Sure, I can provide you a basic Python script using the Opentrons API (version 2.1) to perform medium exchange in a 6-well plate containing hMSC cells. Here's the outline of the steps:
+
+1. Prepare the deck layout with required labware (6-well plate, tip racks, PBS(-) and D-MEM reservoirs).
+2. Distribute the PBS(-) to all wells in the 6-well plate.
+3. Mix the well content gently.
+4. Discard the PBS(-) by transferring it to a liquid waste reservoir.
+5. Repeat steps 2-4 for washing the cells.
+6. Add D-MEM to each well.
+
+Here's the Python script:
+
+```python
+from opentrons import robot, containers, instruments
+
+# Deck layout
+plate = containers.load('6-well-plate', '2')
+tips = containers.load('tiprack-200ul', '1')
+pbs_reservoir = containers.load('trough-12row', '3', 'PBS(-)')
+dmem_reservoir = containers.load('trough-12row', '4', 'D-MEM')
+liquid_waste_reservoir = containers.load('trough-12row', '5', 'liquid_waste')
+
+# Pipette setup
+pipette_200 = instruments.Pipette(
+    axis='b',
+    max_volume=200,
+    min_volume=20,
+    tip_racks=[tips],
+    channels=1,
+)
+
+def exchange_medium():
+    # Exchange medium with PBS(-)
+    for well in plate.wells():
+        pipette_200.pick_up_tip()
+        pipette_200.transfer(1000, pbs_reservoir['A1'], well, new_tip='never')
+        pipette_200.mix(3, 200, well)
+        pipette_200.transfer(1000, well, liquid_waste_reservoir['A1'], new_tip='never')
+        pipette_200.drop_tip()
+
+    # Perform a second wash with PBS(-)
+    for well in plate.wells():
+        pipette_200.pick_up_tip()
+        pipette_200.transfer(1000, pbs_reservoir['A1'], well, new_tip='never')
+        pipette_200.mix(3, 200, well)
+        pipette_200.transfer(1000, well, liquid_waste_reservoir['A1'], new_tip='never')
+        pipette_200.drop_tip()
+
+    # Add D-MEM to each well
+    for well in plate.wells():
+        pipette_200.pick_up_tip()
+        pipette_200.transfer(2000, dmem_reservoir['A1'], well, new_tip='never')
+        pipette_200.drop_tip()
+
+# Execute the protocol
+exchange_medium()
+robot.run()
+```
+
+This script assumes that you have the appropriate labware, including 200µl tip racks, the 6-well plate, and 12-row troughs for PBS(-), D-MEM, and liquid waste. Adjust the labware location indices, 'A1' for different reservoir columns, the volume, and the mixing parameters as needed. Before running the actual experiment, please simulate the code and verify its correctness.
+
+
+:*************************
+
+

@@ -1,0 +1,85 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+We are cultureing hMSC cells (2,500 cells/100 µl) with DMEM in 6 well plates, and we want to make hMSC spheroids (2,500 cells) in 96 well plates with two different conditions, 1) With osteoinduction supplements (OS+) and 2) Without osteoinduction supplements (OS-). For osteoinduction supplements, we use Dexamethasone, Ascorbic acid, and beta-glycerophosphate.
+
+
+For OS(-)
+- use 100 µl medium (DMEM) each well
+For OS(+)
+- use 100 µl medium (DMEM high glucose) each well and add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well.
+
+Write a Python script that does the following:
+- Transfer 100 µl of medium (DMEM) to each well of 96 well plate (OS-)
+- Transfer 100 µl of medium (DMEM high glucose) to each well of 96 well plate (OS+)
+- Add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well of 96 well plate (OS+)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS-)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS+)
+- End
+
+Mmake sure that if the code is long, split the code into multiple tiny functions and use it later in the main function. Ideally, split the experiment into multiple steps, and for each step, write a function that does the step. And then, call the function in the main function.
+
+
+
+###
+
+
+    
+answer:*************************
+To create an Opentrons-compatible Python script, you'll need to use the `opentrons` library. Below, I've provided a script that follows the experiment steps you've defined:
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'hMSC Experiment',
+    'author': 'Your Name',
+}
+
+def transfer_medium(protocol: protocol_api.ProtocolContext, source_well, dest_wells, volume):
+    p300 = protocol.load_instrument('p300_single', 'left')
+    for well in dest_wells:
+        p300.transfer(volume, source_well, well)
+
+def transfer_supplements(protocol: protocol_api.ProtocolContext, sources, dest_wells, volumes):
+    p10 = protocol.load_instrument('p10_single', 'right')
+    for i, supplement in enumerate(sources):
+        for well in dest_wells:
+            p10.transfer(volumes[i], supplement, well)
+
+def transfer_cells(protocol: protocol_api.ProtocolContext, cell_source, dest_wells, volume):
+    p300 = protocol.load_instrument('p300_single', 'left')
+    for well in dest_wells:
+        p300.transfer(volume, cell_source, well)
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Load Labware
+    dmem = protocol.load_labware('gyros', '1').wells_by_name()['A1']
+    dmem_high = protocol.load_labware('neo', '2').wells_by_name()['A1']
+    supplements = protocol.load_labware('corning', '3').wells_by_name()
+    dexamethasone, ascorbic_acid, beta_gp = supplements['A1'], supplements['A2'], supplements['A3']
+    cell_source = protocol.load_labware('nunc', '4').wells_by_name()['A1']
+    os_minus = protocol.load_labware('greiner_96_wellplate', '5').wells()
+    os_plus = protocol.load_labware('greiner_96_wellplate', '6').wells()
+
+    # Step 1 & 2: Transfer media
+    transfer_medium(protocol, dmem, os_minus, 100)
+    transfer_medium(protocol, dmem_high, os_plus, 100)
+
+    # Step 3: Add supplements
+    transfer_supplements(protocol, [dexamethasone, ascorbic_acid, beta_gp], os_plus, [0.1, 1, 1])
+
+    # Step 4 & 5: Transfer cells
+    transfer_cells(protocol, cell_source, os_minus, 100)
+    transfer_cells(protocol, cell_source, os_plus, 100)
+```
+
+To use this script, save it as a .py file and upload it to the Opentrons app. Please note that you may need to adjust the labware names (e.g., 'gyros', 'neo', 'corning', 'nunc', 'greiner_96_wellplate') to match the labware you're actually using in your experiment. You can find a list of supported labware names in the [Opentrons Labware Library](https://labware.opentrons.com/).
+
+
+:*************************
+
+

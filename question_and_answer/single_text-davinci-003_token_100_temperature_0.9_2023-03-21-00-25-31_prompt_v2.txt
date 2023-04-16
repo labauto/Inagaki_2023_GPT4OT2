@@ -1,0 +1,49 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+import opentrons
+
+# Connect Opentrons Robot
+robot = opentrons.Robot()
+
+# Define the labware
+plate = robot.load_labware('6well_plate', '1')
+trough = robot.load_labware('trough_12row', '2')
+tiprack = robot.load_labware('tiprack_10ul', '3')
+
+# Define the pipettes
+pipette = robot.load_instrument('p10_single', 'left', tip_racks=[tiprack])
+
+# Define the reagents (old medium, new medium and PBS)
+old_medium = trough['A1']
+new_medium = trough['A2']
+pbs = trough['A3']
+
+# Exchange the medium
+for well in [well for row in plate.rows() for well in row]:
+    # Dispense 10 uL of old medium
+    pipette.transfer(10, old_medium, well, new_tip='always')
+    # Rinse the well with 10 uL of PBS
+    pipette.transfer(10, pbs, well, new_tip='always')
+    # Dispense 10 uL of new medium
+    pipette.transfer(10, new_medium, well, new_tip='always')
+
+# Home the robot
+robot.home()
+
+
+:*************************
+
+

@@ -1,0 +1,1 @@
+# Based on the error message, it seems like the Python script you have written is using an older version of the Opentrons API (Version 1.0) which is not supported by the current Robot Server version (4.0.0) you are using. 

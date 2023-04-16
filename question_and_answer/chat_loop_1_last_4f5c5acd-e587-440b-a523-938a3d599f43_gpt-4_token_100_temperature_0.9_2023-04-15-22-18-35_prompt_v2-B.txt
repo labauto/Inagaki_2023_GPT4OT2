@@ -1,0 +1,66 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Prepare immunostained hMSC cells to visualize lysosomes.
+The cell is cultured in 6 well plate.
+    
+answer:*************************
+Certainly! To interact with the Opentrons robot, we will need the Opentrons API. You can find information about installing the Opentrons API in the official documentation here: https://docs.opentrons.com/v2/new_atomic_commands.html. 
+
+Please make sure you have the API properly installed and configured for your setup. Here's the Python script that performs the given experiment:
+
+Important note: This script is a starting point and might require further adjustments and testing with the robot hardware to fine-tune and ensure the protocol works as intended.
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'Immunostaining hMSC Cells to Visualize Lysosomes',
+    'author': 'Assistant',
+    'apiLevel': '2.9'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    
+    # Labware
+    plate_6_wells = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '1')
+    trough_12_wells = protocol.load_labware('usascientific_12_reservoir_22ml', '2')
+    tiprack_1000ul = protocol.load_labware('opentrons_96_tiprack_1000ul', '3')
+    
+    # Pipettes
+    p1000 = protocol.load_instrument('p1000_single_gen2', 'right', tip_racks=[tiprack_1000ul])
+
+    # Reagents
+    cells = plate_6_wells.wells_by_name()['A1']
+    lysosome_stain = trough_12_wells.wells_by_name()['A1']
+    buffer = trough_12_wells.wells_by_name()['A2']
+
+    # Protocol
+    for well in plate_6_wells.wells():
+        if not well == cells:
+            # Transfer buffer
+            p1000.pick_up_tip()
+            p1000.transfer(1000, buffer, well, mix_after=(3, 950), new_tip='never')
+            p1000.drop_tip()
+
+            # Transfer lysosome stain
+            p1000.pick_up_tip()
+            p1000.transfer(
+                10, lysosome_stain, well.top(-2), mix_after=(3, 10), new_tip='never')
+            p1000.drop_tip()
+
+            # Perform an incubation step if necessary, for example:
+            # protocol.delay(minutes=30)  # Adjust the time as needed
+```
+
+This script initializes the Opentrons robot protocol, loads labware (6-well plate, 12-well reservoir, and tips), pipettes cells into the wells, and then adds the lysosome stain mixed with buffer into each well. If you'd like to include any wait or incubation periods in between steps, uncomment the "protocol.delay" line and update the minutes accordingly.
+
+Please make sure to test the protocol thoroughly with the actual robot and adjust the parameters accordingly to ensure the protocol is performing as expected.
+
+
+:*************************
+
+

@@ -1,0 +1,119 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+We are cultureing hMSC cells (2,500 cells/100 µl) with DMEM in 6 well plates, and we want to make hMSC spheroids (2,500 cells) in 96 well plates with two different conditions, 1) With osteoinduction supplements (OS+) and 2) Without osteoinduction supplements (OS-). For osteoinduction supplements, we use Dexamethasone, Ascorbic acid, and beta-glycerophosphate.
+
+
+For OS(-)
+- use 100 µl medium (DMEM) each well
+For OS(+)
+- use 100 µl medium (DMEM high glucose) each well and add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well.
+
+Write a Python script that does the following:
+- Transfer 100 µl of medium (DMEM) to each well of 96 well plate (OS-)
+- Transfer 100 µl of medium (DMEM high glucose) to each well of 96 well plate (OS+)
+- Add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well of 96 well plate (OS+)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS-)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS+)
+- End
+    
+answer:*************************
+To write a Python script for automating an Opentrons machine, you'll need to install the OT-2 API using the following pip command:
+
+```bash
+pip install opentrons
+```
+
+After you have installed the Opentrons API, you can start writing the Python script for your experiment:
+
+```python
+from opentrons import protocol_api
+
+metadata = {'apiLevel': "2.11"}
+
+
+def run(protocol: protocol_api.ProtocolContext):
+
+    # Define labware
+    tiprack_10 = protocol.load_labware('opentrons_96_tiprack_10ul', 1)
+    wellplate_6 = protocol.load_labware('corning_6_wellplate_16.8ml_flat', 2)
+    wellplate_96_os_minus = protocol.load_labware('corning_96_wellplate_360ul_flat', 3)
+    wellplate_96_os_plus = protocol.load_labware('corning_96_wellplate_360ul_flat', 4)
+    tuberack = protocol.load_labware('opentrons_15_tuberack_falcon_15ml_conical', 5)
+
+    # Define pipettes
+    pipette = protocol.load_instrument("p10_single_gen2", "right", tip_racks=[tiprack_10])
+
+    # Define medium bottles and supplements
+    dmem = tuberack.wells_by_name()["A1"]
+    dmem_high_glucose = tuberack.wells_by_name()["B1"]
+    dex = tuberack.wells_by_name()["C1"]
+    aa = tuberack.wells_by_name()["D1"]
+    bgp = tuberack.wells_by_name()["E1"]
+    hmsc_cells = wellplate_6.wells()[0]
+
+    # Transfer medium (DMEM) to OS(-) wells
+    for well in wellplate_96_os_minus.wells():
+        pipette.pick_up_tip()
+        pipette.aspirate(100, dmem)
+        pipette.dispense(100, well)
+        pipette.blow_out()
+        pipette.drop_tip()
+
+    # Transfer medium (DMEM high glucose) to OS(+) wells
+    for well in wellplate_96_os_plus.wells():
+        pipette.pick_up_tip()
+        pipette.aspirate(100, dmem_high_glucose)
+        pipette.dispense(100, well)
+        pipette.blow_out()
+        pipette.drop_tip()
+
+    # Add supplements to OS(+) wells
+    for well in wellplate_96_os_plus.wells():
+        # Add Dex
+        pipette.pick_up_tip()
+        pipette.aspirate(0.1, dex)
+        pipette.dispense(0.1, well)
+        pipette.blow_out()
+        pipette.drop_tip()
+
+        # Add AA
+        pipette.pick_up_tip()
+        pipette.aspirate(1, aa)
+        pipette.dispense(1, well)
+        pipette.blow_out()
+        pipette.drop_tip()
+
+        # Add BGP
+        pipette.pick_up_tip()
+        pipette.aspirate(1, bgp)
+        pipette.dispense(1, well)
+        pipette.blow_out()
+        pipette.drop_tip()
+
+    # Transfer hMSC cells to OS(-) wells
+    for well in wellplate_96_os_minus.wells():
+        pipette.pick_up_tip()
+        pipette.aspirate(100, hmsc_cells)
+        pipette.dispense(100, well)
+        pipette.blow_out()
+        pipette.drop_tip()
+
+    # Transfer hMSC cells to OS(+) wells
+    for well in wellplate_96_os_plus.wells():
+        pipette.pick_up_tip()
+        pipette.aspirate(100, hmsc_cells)
+        pipette.dispense(100, well)
+        pipette.blow_out()
+        pipette.drop_tip()
+```
+
+This script will run the defined experiment using the Opentrons API on the Opentrons OT-2 robot. Keep in mind that this is just an example and may require modifications depending on the specific labware and pipettes used, as well as any calibration or additional steps required for your experiment.
+
+
+:*************************
+
+

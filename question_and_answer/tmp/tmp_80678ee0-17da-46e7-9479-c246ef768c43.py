@@ -1,0 +1,63 @@
+
+# Import libraries
+import opentrons
+from opentrons import instruments, containers
+
+# Labware setup
+plate1 = containers.load('6-well', 'A1')
+
+# Pipette setup
+p1000 = instruments.Pipette(axis='a', max_volume=1000)
+
+# Reagents setup
+lysosome_staining_solution = containers.load('tube-rack', 'B1')
+
+# Start the Opentrons robot 
+robot = opentrons.Robot()
+
+# Transfer lysosome staining solution to 6-well plate
+p1000.transfer(lysosome_staining_solution.wells('A1'), plate1.wells('A1'),
+               volume=50, new_tip='always')
+p1000.transfer(lysosome_staining_solution.wells('A2'), plate1.wells('A2'),
+               volume=50, new_tip='always')
+p1000.transfer(lysosome_staining_solution.wells('A3'), plate1.wells('A3'),
+               volume=50, new_tip='always')
+p1000.transfer(lysosome_staining_solution.wells('B1'), plate1.wells('B1'),
+               volume=50, new_tip='always')
+p1000.transfer(lysosome_staining_solution.wells('B2'), plate1.wells('B2'),
+               volume=50, new_tip='always')
+p1000.transfer(lysosome_staining_solution.wells('B3'), plate1.wells('B3'),
+               volume=50, new_tip='always')
+
+# Incubate the plate
+robot.pause('Incubate plate for 24 hours.')
+
+# Wash the plate with PBS
+wash_solution = containers.load('tube-rack', 'C1')
+
+p1000.transfer(wash_solution.wells('A1'), plate1.wells('A1'),
+               volume=50, new_tip='always')
+p1000.transfer(wash_solution.wells('A2'), plate1.wells('A2'),
+               volume=50, new_tip='always')
+p1000.transfer(wash_solution.wells('A3'), plate1.wells('A3'),
+               volume=50, new_tip='always')
+p1000.transfer(wash_solution.wells('B1'), plate1.wells('B1'),
+               volume=50, new_tip='always')
+p1000.transfer(wash_solution.wells('B2'), plate1.wells('B2'),
+               volume=50, new_tip='always')
+p1000.transfer(wash_solution.wells('B3'), plate1.wells('B3'),
+               volume=50, new_tip='always')
+
+# Incubate the plate 
+robot.pause('Incubate plate for 2 hours.')
+
+# Visualize lysosomes by microscope
+robot.pause('Visualize lysosomes by microscope.')
+
+# End the Opentrons robot
+robot.end()
+
+
+:*************************
+
+

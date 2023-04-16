@@ -1,0 +1,81 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Sure, I can help you write a Python script to use with an Opentrons OT-2 robot. As a starting point, please follow the official Opentrons API documentation at https://docs.opentrons.com/ for detailed instructions on how to set up and use the Opentrons API.
+
+Here's a Python script for the specified experiment, which exchanges the hMSC cell culture medium in a 6-well plate using PBS(-) and D-MEM:
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'hMSC Medium Exchange',
+    'author': 'Your Name <youremail@domain.com>',
+    'apiLevel': '2.11'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+
+    # Labware
+    tiprack = protocol.load_labware('opentrons_96_tiprack_300ul', '1')
+    tuberack = protocol.load_labware('opentrons_24_tuberack_generic_2ml_screwcap', '2')
+    cell_plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '3')
+
+    # Pipettes
+    p300 = protocol.load_instrument('p300_single_gen2', 'right', tip_racks=[tiprack])
+
+    # Reagents
+    pbs_minus = tuberack.wells_by_name()['A1']
+    d_mem = tuberack.wells_by_name()['A2']
+
+    # Procedure
+    for well in cell_plate.wells():
+        # Aspirate 1 mL of medium from well
+        p300.pick_up_tip()
+        p300.aspirate(1000, well)
+        p300.dispense(1000, well)
+        p300.drop_tip()
+
+        # Add 2 mL of PBS(-) to each well
+        p300.pick_up_tip()
+        p300.aspirate(800, pbs_minus)
+        p300.dispense(800, well)
+        p300.aspirate(200, pbs_minus)
+        p300.dispense(200, well)
+        p300.drop_tip()
+
+        # Aspirate 2 mL of PBS(-) and medium from each well
+        p300.pick_up_tip()
+        p300.aspirate(1000, well)
+        p300.dispense(1000, well)
+        p300.aspirate(1000, well)
+        p300.dispense(1000, well)
+        p300.drop_tip()
+
+        # Add 2 mL of D-MEM to each well
+        p300.pick_up_tip()
+        p300.aspirate(800, d_mem)
+        p300.dispense(800, well)
+        p300.aspirate(200, d_mem)
+        p300.dispense(200, well)
+        p300.drop_tip()
+```
+
+Be sure to customize the script as needed for your specific hMSC cell culture medium exchange procedure. Note that this protocol assumes certain labware and pipette models, so be sure to adjust the labware and instrument names as required to match your experimental setup. This script also assumes that the correct amount of medium is removed and exchanged, adjust these volumes in the aspiration and dispense steps to fit your specific protocol.
+
+
+:*************************
+
+

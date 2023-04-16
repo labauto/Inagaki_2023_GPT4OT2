@@ -18,5 +18,5 @@ question_and_answer/archives
 question_and_answer/scripts
 *.zip
 
-question_and_answer/
+# question_and_answer/
 # config.py

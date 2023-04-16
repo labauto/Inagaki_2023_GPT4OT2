@@ -1,0 +1,66 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+To get started with writing a script for the Opentrons robot, you need to install the Opentrons package. You can follow the instructions on their official website: https://www.opentrons.com/getting-started
+
+Once you have installed the package, you can write the script as below.
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'hMSC Cell Culture Medium Exchange',
+    'author': 'Your Name <youremail@example.com>',
+    'description': 'An example protocol for exchanging hMSC cell culture medium with PBS(-) and D-MEM',
+    'apiLevel': '2.7'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Define Labware
+    tiprack_300 = protocol.load_labware('opentrons_96_tiprack_300ul', '7')
+    p300_single = protocol.load_instrument('p300_single', 'left', tip_racks=[tiprack_300])
+    plate_6_well = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '4')
+    pbs_tube = protocol.load_labware('opentrons_24_tuberack_generic_2ml_screwcap', '5')
+    dm_tube = protocol.load_labware('opentrons_24_tuberack_generic_2ml_screwcap', '6')
+
+    # Preparing Tubes
+    pbs = pbs_tube.wells('A1')
+    dm = dm_tube.wells('A2')
+
+    # Transfer to 6-well Plate
+    for well in plate_6_well.columns()[0]:
+        p300_single.pick_up_tip()
+        p300_single.transfer(1000, pbs, well)
+        p300_single.transfer(1000, dm, well)
+        p300_single.mix(5, 300, well)
+        p300_single.drop_tip()
+
+if __name__ == '__main__':
+    from opentrons import simulate
+    protocol = simulate.get_protocol_api('2.7')
+    run(protocol)
+
+```
+
+This script is an example for exchanging hMSC cell culture medium using PBS(-) and D-MEM. There is a metadata section to describe the protocol, and then the run function to define actions.
+
+First, the required labware is loaded into the OT-2 robot: a 96-tip rack with 300 µL tips, a p300 single pipette, a 6-well plate, and two 24-tube racks with 2 mL screwcap tubes. Then the script specifies the pipetting operations. In this example, the script picks up a new tip for each well, transfers 1000 µL of both PBS(-) and D-MEM to the 6-well plate, mixes the cell culture medium, and then drops the tip.
+
+Please note that you should first set up your Opentrons OT-2 robot and then upload and run the script using the Opentrons App following their instructions. You may need to modify the labware names or locations in the script if your actual setup is different. The Opentrons Labware Library can help you find the correct labware names: https://labware.opentrons.com/
+
+
+:*************************
+
+

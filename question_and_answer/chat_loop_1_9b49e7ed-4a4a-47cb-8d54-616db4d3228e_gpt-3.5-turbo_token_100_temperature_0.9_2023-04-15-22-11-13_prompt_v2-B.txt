@@ -1,0 +1,119 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Prepare immunostained hMSC cells to visualize lysosomes.
+The cell is cultured in 6 well plate.
+    
+answer:*************************
+Sure! Here's an example Python script that uses the Opentrons API to prepare immunostained hMSC cells. Please note that you will need to adjust the `pipette` and `tip_racks` variables to match the specific Opentrons machine and tools you are using.
+
+```python
+# Import the Opentrons API
+import opentrons
+
+# Create a connection to the Opentrons machine
+robot = opentrons.robot
+
+# Define the pipette and tip racks
+pipette = robot.load_instrument('p10_single_v1.5', mount='right')
+tip_racks = [robot.load_labware('opentrons_96_tiprack_10ul', slot) for slot in ['2', '5']]
+
+# Define the labware for the cell culture plate and immunostaining reagents
+cell_plate = robot.load_labware('corning_6_wellplate_16.2ml_flat', '1')
+immunostaining_plate = robot.load_labware('nunc_96_wellplate_92.4ul', '4')
+
+# Define the locations of the reagents in the immunostaining plate
+primary_antibody = immunostaining_plate['A1']
+lysosome_antibody = immunostaining_plate['A2']
+secondary_antibody = immunostaining_plate['A3']
+mounting_medium = immunostaining_plate['A4']
+
+# Define the locations of the cells in the cell culture plate
+cell_locations = [(well, 1) for well in cell_plate.rows('A')]
+
+# Add primary antibody to cells and incubate
+pipette.pick_up_tip(tip_racks[0].well('A1'))
+for cell_location in cell_locations:
+    pipette.aspirate(3, primary_antibody)
+    pipette.dispense(3, cell_location[0])
+pipette.drop_tip()
+
+robot.pause('Incubate cells with primary antibody')
+
+# Wash cells with PBS buffer
+pipette.pick_up_tip(tip_racks[0].well('A2'))
+for cell_location in cell_locations:
+    pipette.aspirate(10, cell_location[0])
+    pipette.dispense(20, cell_location[0])
+    pipette.aspirate(20, cell_location[0])
+    pipette.dispense(30, cell_location[0])
+pipette.drop_tip()
+
+robot.pause('Wash cells with PBS buffer')
+
+# Add lysosome antibody to cells and incubate
+pipette.pick_up_tip(tip_racks[0].well('A3'))
+for cell_location in cell_locations:
+    pipette.aspirate(3, lysosome_antibody)
+    pipette.dispense(3, cell_location[0])
+pipette.drop_tip()
+
+robot.pause('Incubate cells with lysosome antibody')
+
+# Wash cells with PBS buffer
+pipette.pick_up_tip(tip_racks[0].well('A4'))
+for cell_location in cell_locations:
+    pipette.aspirate(10, cell_location[0])
+    pipette.dispense(20, cell_location[0])
+    pipette.aspirate(20, cell_location[0])
+    pipette.dispense(30, cell_location[0])
+pipette.drop_tip()
+
+robot.pause('Wash cells with PBS buffer')
+
+# Add secondary antibody to cells and incubate
+pipette.pick_up_tip(tip_racks[1].well('A1'))
+for cell_location in cell_locations:
+    pipette.aspirate(3, secondary_antibody)
+    pipette.dispense(3, cell_location[0])
+pipette.drop_tip()
+
+robot.pause('Incubate cells with secondary antibody')
+
+# Wash cells with PBS buffer
+pipette.pick_up_tip(tip_racks[1].well('A2'))
+for cell_location in cell_locations:
+    pipette.aspirate(10, cell_location[0])
+    pipette.dispense(20, cell_location[0])
+    pipette.aspirate(20, cell_location[0])
+    pipette.dispense(30, cell_location[0])
+pipette.drop_tip()
+
+robot.pause('Wash cells with PBS buffer')
+
+# Add mounting medium to cells
+pipette.pick_up_tip(tip_racks[1].well('A3'))
+for cell_location in cell_locations:
+    pipette.aspirate(8, mounting_medium)
+    pipette.dispense(8, cell_location[0])
+pipette.drop_tip()
+```
+
+This script assumes that you have already loaded the Opentrons machine with the following tools and reagents:
+
+- A pipette that can transfer 1-10 uL of liquid (specified by the `pipette` variable)
+- Two tip racks that are compatible with the pipette (specified by the `tip_racks` variable)
+- A 6 well cell culture plate (specified by the `cell_plate` variable)
+- A 96 well immunostaining plate (specified by the `immunostaining_plate` variable)
+- Primary and secondary antibodies against lysosomes (specified by the `primary_antibody`, `lysosome_antibody`, and `secondary_antibody` variables)
+- Mounting medium for the cells (specified by the `mounting_medium` variable)
+
+If you have any questions or if you encounter any issues with running this script, please let me know!
+
+
+:*************************
+
+

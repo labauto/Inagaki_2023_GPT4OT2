@@ -1,0 +1,38 @@
+prompt:*************************
+ I got this error:
+```
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 114, in _parse_python
+    version = get_version(metadata, parsed)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 348, in get_version
+    raise RuntimeError(
+RuntimeError: If this is not an API v1 protocol, you must specify the target api level in the apiLevel key of the metadata. For instance, metadata={"apiLevel": "2.0"}
+
+```
+can you fix it? Make sure you only answer Python script.
+answer:*************************
+Yes, this error is indicating that the target API level is not specified in the protocol metadata. You can fix it by adding the `apiLevel` key with the appropriate value (in this case, `"2.0"`) to the metadata dictionary. Here's an example:
+
+```python
+metadata = {
+    'protocolName': 'Measurement of viability and cytotoxicity of A549 cells',
+    'author': 'Your Name',
+    'description': 'Opentrons protocol for measuring cell viability and cytotoxicity with A549 cells treated with thapsigargin',
+    'apiLevel': '2.0'
+}
+``` 
+
+Of course, make sure to adjust the values to match your specific protocol needs.
+
+
+:*************************
+
+

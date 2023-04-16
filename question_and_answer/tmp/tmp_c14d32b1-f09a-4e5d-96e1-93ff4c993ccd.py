@@ -1,0 +1,53 @@
+Sure. Here is an example Python script that uses the Opentrons machine to prepare immunostained hMSC cells to visualize E-Cadherin: 
+
+```
+# Import the required libraries
+from opentrons import labware, instruments
+
+# Define the labware
+plate = labware.load('corning_6_wellplate_16.8ml_flat', '1')
+
+# Define the instruments
+pipette = instruments.P300_Single(mount='left')
+
+# Define the reagents
+primary_antibody = 'A488 anti-E-Cadherin'
+secondary_antibody = 'A594 anti-mouse'
+
+# Define the steps for the experiment
+pipette.pick_up_tip()
+for well in plate.wells():
+    # Add primary antibody to each well of the plate
+    pipette.transfer(50, primary_antibody, well.top())
+
+    # Incubate for 1 hour at 37 degrees Celsius
+
+    # Wash with PBS buffer
+    pipette.transfer(100, plate['A1'], well.top())
+
+    # Add secondary antibody to each well of the plate
+    pipette.transfer(50, secondary_antibody, well.top())
+
+    # Incubate for 30 minutes at room temperature
+
+    # Wash with PBS buffer
+    pipette.transfer(100, plate['A1'], well.top())
+
+    # Add DAPI stain to each well of the plate
+    pipette.transfer(10, 'DAPI', well.top())
+
+    # Incubate for 5 minutes at room temperature
+
+    # Wash with PBS buffer
+    pipette.transfer(100, plate['A1'], well.top())
+
+# Finish the script
+pipette.drop_tip()
+```
+
+This script uses the Opentrons machine to transfer the primary and secondary antibodies, wash the cells with PBS buffer, and add a DAPI stain to each well of the plate. You would need to modify the script to include the specific reagents and incubation times for your experiment.
+
+
+:*************************
+
+

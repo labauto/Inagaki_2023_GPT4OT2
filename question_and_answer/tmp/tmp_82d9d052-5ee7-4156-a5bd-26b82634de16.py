@@ -1,0 +1,117 @@
+Certainly! Here's an example Python script for preparing immunostained hMSC cells to visualize lysosomes using the Opentrons robot:
+
+```
+# Import necessary Opentrons modules
+from opentrons import labware, instruments, robot
+
+# Define the labware (use your own specific names for the labware containers)
+plate = labware.load('6-well-plate', '1')
+tiprack = labware.load('tiprack-200ul', '2')
+
+# Define the pipette (use your own specific model)
+p300 = instruments.P300_Single(
+    mount='left',
+    tip_racks=[tiprack]
+)
+
+# Define the steps of the experiment
+
+# Step 1: Add 200ul of paraformaldehyde (PFA) to each well
+for well in plate.wells():
+    p300.pick_up_tip()
+    p300.mix(3, 200, PFA)
+    p300.transfer(200, PFA, well, new_tip='never')
+    p300.drop_tip()
+
+# Step 2: Incubate plate for 10 minutes at room temperature
+robot.pause("Incubate plate for 10 minutes at room temperature")
+
+# Step 3: Wash wells twice with 1x PBS buffer
+for well in plate.wells():
+    p300.pick_up_tip()
+    for i in range(2):
+        p300.transfer(300, PBS, well, new_tip='never')
+        p300.blow_out(well.top())
+    p300.drop_tip()
+
+# Step 4: Add 200ul of blocking buffer to each well
+for well in plate.wells():
+    p300.pick_up_tip()
+    p300.mix(3, 200, blocker)
+    p300.transfer(200, blocker, well, new_tip='never')
+    p300.drop_tip()
+
+# Step 5: Incubate plate for 1 hour at room temperature 
+robot.pause("Incubate plate for 1 hour at room temperature")
+
+# Step 6: Wash wells twice with 1x PBS buffer
+for well in plate.wells():
+    p300.pick_up_tip()
+    for i in range(2):
+        p300.transfer(300, PBS, well, new_tip='never')
+        p300.blow_out(well.top())
+    p300.drop_tip()
+
+# Step 7: Add anti-LAMP1 antibody to each well
+for well in plate.wells():
+    p300.pick_up_tip()
+    p300.mix(3, 100, anti_LAMP1)
+    p300.transfer(100, anti_LAMP1, well, new_tip='never')
+    p300.drop_tip()
+
+# Step 8: Incubate plate for 1 hour at room temperature
+robot.pause("Incubate plate for 1 hour at room temperature")
+
+# Step 9: Wash wells three times with 1x PBS buffer
+for well in plate.wells():
+    p300.pick_up_tip()
+    for i in range(3):
+        p300.transfer(300, PBS, well, new_tip='never')
+        p300.blow_out(well.top())
+    p300.drop_tip()
+
+# Step 10: Add secondary antibody to each well
+for well in plate.wells():
+    p300.pick_up_tip()
+    p300.mix(3, 100, secondary)
+    p300.transfer(100, secondary, well, new_tip='never')
+    p300.drop_tip()
+
+# Step 11: Incubate plate for 1 hour at room temperature
+robot.pause("Incubate plate for 1 hour at room temperature")
+
+# Step 12: Wash wells three times with 1x PBS buffer
+for well in plate.wells():
+    p300.pick_up_tip()
+    for i in range(3):
+        p300.transfer(300, PBS, well, new_tip='never')
+        p300.blow_out(well.top())
+    p300.drop_tip()
+
+# Step 13: Add DAPI stain to each well
+for well in plate.wells():
+    p300.pick_up_tip()
+    p300.mix(3, 100, DAPI)
+    p300.transfer(100, DAPI, well, new_tip='never')
+    p300.drop_tip()
+
+# Step 14: Incubate plate for 10 minutes at room temperature
+robot.pause("Incubate plate for 10 minutes at room temperature")
+
+# Step 15: Wash wells twice with 1x PBS buffer
+for well in plate.wells():
+    p300.pick_up_tip()
+    for i in range(2):
+        p300.transfer(300, PBS, well, new_tip='never')
+        p300.blow_out(well.top())
+    p300.drop_tip()
+
+# That's it! Your cells are now immunostained and ready to visualize lysosomes
+```
+
+This is just an example and may need to be adjusted based on your specific equipment and desired experimental conditions. It is also important to note that immunostaining can be complex and requires optimization, so you may need to tweak the conditions to achieve optimal staining.
+
+
+:*************************
+
+

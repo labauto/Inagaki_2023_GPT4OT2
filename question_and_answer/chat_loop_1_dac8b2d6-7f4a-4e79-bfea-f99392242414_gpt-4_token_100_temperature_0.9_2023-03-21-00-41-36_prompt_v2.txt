@@ -1,0 +1,71 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Sure! Before I write a Python script, I need to know if you have the Opentrons API and necessary modules installed in your Python environment. You can visit [Opentrons API documentation](https://docs.opentrons.com/) for more information regarding installation.
+
+Here's a Python script for exchanging hMSC cell culture medium using PBS(-) and D-MEM using the Opentrons OT-2 robot. Note that this script assumes you have an Opentrons OT-2 robot which includes a 300uL 8-channel pipette and standard labware.
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'Exchange Cell Culture Medium',
+    'author': 'Your Name',
+    'description': 'Exchange hMSC cell culture medium using PBS(-) and D-MEM in a 6 well plate',
+    'apiLevel': '2.11'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Labware
+    tiprack = protocol.load_labware('opentrons_96_tiprack_300ul', '1')
+    pbs_labware = protocol.load_labware('nest_1_reservoir_195ml', '2') # Please replace 'nest_1_reservoir_195ml' with the correct reservoir
+    dmem_labware = protocol.load_labware('nest_1_reservoir_195ml', '3') # Please replace 'nest_1_reservoir_195ml' with the correct reservoir
+    well_plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '4')
+
+    # Pipettes
+    p300_multi = protocol.load_instrument('p300_multi', 'left', tip_racks=[tiprack])
+
+    # Variables
+    pbs_volume = 100 # Volume of PBS(-) to add, in uL
+    dmem_volume = 100 # Volume of D-MEM to add, in uL
+
+    # Replace well_index with the well number you want to perform medium exchange
+    # (e.g., A1, B1, C1, etc.)
+    well_index = 'A1'
+
+    # Protocol
+    # Remove existing medium
+    p300_multi.pick_up_tip()
+    p300_multi.transfer(200, well_plate[well_index], p300_multi.waste_container.top(), mix_after=(1, 200))
+    p300_multi.drop_tip()
+
+    # Wash with PBS
+    p300_multi.pick_up_tip()
+    p300_multi.transfer(pbs_volume, pbs_labware.wells()[0], well_plate[well_index], mix_after=(1, 100), new_tip='never')
+    p300_multi.transfer(200, well_plate[well_index], p300_multi.waste_container.top(), mix_after=(1, 200))
+    p300_multi.drop_tip()
+
+    # Add D-MEM
+    p300_multi.pick_up_tip()
+    p300_multi.transfer(dmem_volume, dmem_labware.wells()[0], well_plate[well_index], mix_after=(1, 100), new_tip='never')
+    p300_multi.drop_tip()
+```
+
+Before running this script on your Opentrons OT-2 robot, please make sure you've connected the robot to your computer and opened the Opentrons App. Upload the script through the app, calibrate the pipette and labware using the app's interface, and start the protocol.
+
+
+:*************************
+
+

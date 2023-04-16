@@ -1,0 +1,92 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+Sure, here's a Python script that controls an Opentrons robot to exchange the medium of hMSC cell culture between PBS(-) and D-MEM in a 6-well plate:
+
+```python
+from opentrons import labware, instruments, robot
+
+# Define labware
+plate = labware.load('corning_6_wellplate_16.8ml_flat', '1')
+
+p200 = instruments.Pipette(
+    name='p200',
+    trash_container=plate,
+    tip_racks=[],
+    min_volume=20,
+    max_volume=200,
+    axis="a",
+)
+
+# Define columns and wells to be used
+wells = [well for row in plate.rows() for well in row]
+PBS_wells = wells[0:3]
+DMEM_wells = wells[3:]
+
+# Define volumes
+PBS_volume = 200  # uL
+DMEM_volume = 500  # uL
+
+# Exchanging media
+robot.comment("Exchanging hMSC cell culture medium using PBS(-) and D-MEM")
+for i in range(2):
+    # Dispense PBS into wells
+    p200.distribute(
+        PBS_volume,
+        PBS_wells,
+        disposal_volume=20
+    )
+    robot.pause("Incubate for 5 minutes")
+    # Remove PBS from wells
+    p200.transfer(
+        200,
+        PBS_wells,
+        plate['A1'].top(),
+        disposal_volume=20,
+        new_tip='always'
+    )
+    # Dispense DMEM into wells
+    p200.distribute(
+        DMEM_volume,
+        DMEM_wells,
+        disposal_volume=20
+    )
+    robot.pause("Incubate for 30 minutes")
+    # Remove DMEM from wells
+    p200.transfer(
+        500,
+        DMEM_wells,
+        plate['A1'].top(),
+        disposal_volume=20,
+        new_tip='always'
+    )
+```
+
+This script loads a 6-well plate, sets up a pipette, defines volumes of PBS and DMEM, and proceeds to exchange the media by following these steps:
+
+1. Dispense PBS into the first 3 wells
+2. Incubate the plate for 5 minutes
+3. Remove PBS from the wells
+4. Dispense DMEM into the first 3 wells
+5. Incubate the plate for 30 minutes
+6. Remove DMEM from the wells
+7. Repeat steps 1-6 with the last 3 wells.
+
+You can modify the script as needed to fit your specific experimental setup or preferences.
+
+
+:*************************
+
+

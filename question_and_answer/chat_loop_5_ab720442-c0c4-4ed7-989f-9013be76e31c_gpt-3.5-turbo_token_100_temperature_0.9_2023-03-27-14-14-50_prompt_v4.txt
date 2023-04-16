@@ -1,0 +1,36 @@
+prompt:*************************
+ I got this error: ```python
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 114, in _parse_python
+    version = get_version(metadata, parsed)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 348, in get_version
+    raise RuntimeError(
+RuntimeError: If this is not an API v1 protocol, you must specify the target api level in the apiLevel key of the metadata. For instance, metadata={"apiLevel": "2.0"}
+
+```, can you fix it? Make sure you only answer Python script. If you don't know how to fix it, say 'I don't know'.
+answer:*************************
+Sure, please try replacing the first line of your script with the following:
+
+```
+metadata = {
+    'apiLevel': '2.0',
+    'protocolName': 'hMSC spheroid formation assay',
+    'author': 'Your name here',
+    'description': 'A protocol to culture and make hMSC spheroids, with or without osteoinduction supplements in a 96 well plate using the Opentrons robot.'
+}
+``` 
+
+This should define the API level for your script and provide some basic information about the protocol.
+
+
+:*************************
+
+

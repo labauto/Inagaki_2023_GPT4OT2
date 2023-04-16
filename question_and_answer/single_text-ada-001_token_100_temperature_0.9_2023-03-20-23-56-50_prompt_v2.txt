@@ -1,0 +1,38 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+
+#arovarsi.py
+
+print("Cleaning the machine")
+
+while True:
+
+MSC(of=4) = MSC(of=5)
+
+MSC(of=6) = MSC(of=7)
+
+if MSC(of=6) > MSC(of=5):
+
+MSC(of=6) = MSC(of=7)
+
+MSC(of=7) = MSC(of=6)
+
+break
+
+
+:*************************
+
+

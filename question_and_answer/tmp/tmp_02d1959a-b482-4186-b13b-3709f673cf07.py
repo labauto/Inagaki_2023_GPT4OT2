@@ -1,0 +1,145 @@
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'Viability and Cytotoxicity Assay',
+    'apiLevel': '2.10'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Load Labware
+    fifty_tube_rack = protocol.load_labware('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '6')
+    tube_rack_24 = protocol.load_labware('opentrons_24_tuberack_nest_1.5ml_snapcap', '7')
+    plate = protocol.load_labware('corning_96_wellplate_360ul_flat', '8')
+    luminescence_plate = protocol.load_labware('corning_96_wellplate_360ul_flat', '9')
+
+    # Load Pipettes
+    p10_single = protocol.load_instrument('p10_single', 'left', tip_racks=protocol.load_labware('opentrons_96_filtertiprack_10ul', '10'))
+    p50_multi = protocol.load_instrument('p50_multi', 'right', tip_racks=[protocol.load_labware('opentrons_96_filtertiprack_200ul', slot) for slot in ['1', '3', '4', '5']])
+
+    # Define Constants
+    CELL_NUMBER = 8000
+    THAPSIGARGIN_LAMBDA = {
+        'A1': 1000, 'A2': 100, 'A3': 10, 'A4': 1, 'A5': 0.1, 'A6': 0.05, 'B1': 0.01
+    }
+    THAPSIGARGIN_4X_LAMBDA = {
+        'C1': 1.56, 'C2': 3.12, 'C3': 6.24, 'C4': 12.52, 'C5': 25, 'C6': 50, 'D1': 0.1, 'D2': 0.2, 'D3': 0.4,
+        'D4': 0.8, 'D5': 1.6, 'D6': 2
+    }
+
+    # Define Functions
+    def run_step(step_num: int, step_desc: str, func: callable):
+        protocol.comment(f"Step {step_num}: {step_desc}")
+        func()
+        protocol.comment("")
+
+    def seed_cells():
+        cell_count = 8000
+        cell_volume = 6.0  # volume in the tube rack in slot 7
+          
+        # Seed cells
+        p50_multi.pick_up_tip()
+        for col in plate.columns_by_name():
+            p50_multi.transfer(cell_volume, fifty_tube_rack.wells_by_name()['B1'], col[0].top(), new_tip='never')
+            p50_multi.transfer(cell_volume, fifty_tube_rack.wells_by_name()['B1'], col[1].top(), mix_after=(2, 10), new_tip='never')
+        p50_multi.drop_tip()
+
+    def add_thapsigargin():
+        # Transfer thapsigargin dilutions to the column
+        for col_num, (conc, volume) in enumerate(THAPSIGARGIN_4X_LAMBDA.items()):
+            dest_wells = [well for row in plate.rows()[:8] for well in row[col_num:col_num+1]]
+            p50_multi.distribute(
+                volume=4,
+                source=tube_rack_24.wells_by_name()['C6'],
+                dest=dest_wells,
+                mix_before=(2, 10),
+                new_tip='always',
+                disposal_vol=0
+            )
+
+        # Prepare 2X dilutions
+        for col_num in range(1, 12):
+            src_col = plate.columns_by_index()[col_num-1]
+            dest_col = plate.columns_by_index()[col_num + 10]
+            p50_multi.transfer(
+                volume=100,
+                source=src_col,
+                dest=dest_col,
+                mix_before=(2, 50),
+                new_tip='always'
+            )
+
+        # Transfer 1X thapsigargin to cells
+        for col_num, (conc, volume) in enumerate(THAPSIGARGIN_LAMBDA.items()):
+            dest_wells = [well for well in plate.rows_by_name()[f'{conc[0]}']][:3]
+            for dest_well in dest_wells:
+                p50_multi.transfer(
+                    volume=100,
+                    source=plate.columns_by_name()[conc][col_num],
+                    dest=dest_well,
+                    mix_before=(2, 20),
+                    new_tip='always'
+                )
+
+    def add_ctg_reagent():
+        p20_multi.transfer(15, tube_rack_24.wells_by_name()['B2'], plate.rows_by_name()['A'][1:], new_tip='always')
+
+    def shake_plate():
+        protocol.comment("Shaking for 2 minutes.")
+        protocol.set_rail_lights(True)
+        protocol.set_temperature(37)
+        protocol.await_temperature(37)
+        protocol.set_shaker_temperature(37)
+        protocol.set_shaker_speed(500)
+        protocol.shake(duration_seconds=120)
+        protocol.set_shaker_speed(0)
+        protocol.comment("")
+
+    def incubate_plate(rt=True):
+        if rt:
+            protocol.comment("Incubating at room temperature for 15 minutes.")
+        else:
+            protocol.comment("Incubating at 37C for 2.5 hours")
+            protocol.set_temperature(37)
+            protocol.await_temperature(37)
+        protocol.comment("")
+        protocol.delay(minutes=15)
+
+    def measure_fluorescence():
+        p50_multi.pick_up_tip()
+        for row in plate.rows():
+            for well in row:
+                p50_multi.mix(1, 50, well)
+                p50_multi.transfer(50, well, well.top(), new_tip='never')
+                protocol.delay(seconds=1)
+        p50_multi.drop_tip()
+
+        protocol.comment("Measuring fluorescence.")
+        protocol.set_experimental_handshake('measure_fluorescence')
+        protocol.set_plate_temperature(27)
+        protocol.await_plate_temperature(27)
+        protocol.set_rail_lights(False)
+        read_plate = protocol8588_reader.load_luminescence(plate)
+        for read in read_plate:
+            protocol.comment(read[1])
+            protocol.delay(seconds=1)
+
+    def add_ctglo_reagent():
+        p200_multi.transfer(80, tube_rack_24.wells_by_name()['B1'], luminescence_plate.rows_by_name()['A'], new_tip='always')
+
+    def measure_luminescence():
+        protocol.comment("Measuring luminescence.")
+        protocol.set_experimental_handshake('measure_luminescence')
+        protocol.set_plate_temperature(27)
+        protocol.await_plate_temperature(27)
+        read_luminescence = protocol8588_reader.load_luminescence(luminescence_plate)
+        for read in read_luminescence:
+            protocol.comment(read[1])
+            protocol.delay(seconds=1)
+ 
+    # Define Experiment Workflow
+    run_step(1, "Transfer cells to wells",
+
+
+:*************************
+
+

@@ -1,0 +1,83 @@
+prompt:*************************
+ I got this error:
+```
+/Users/takashimac/.opentrons/robot_settings.json not found. Loading defaults
+/Users/takashimac/.opentrons/deck_calibration.json not found. Loading defaults
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/execution/execute_python.py", line 60, in run_python
+    exec("run(__context)", new_globs)
+  File "<string>", line 1, in <module>
+  File "./question_and_answer/tmp/tmp_bffbd2f6-a183-445e-a907-120fc1ec3f18.py", line 32, in run
+    pipette.aspirate(1000, cell_well)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/api_support/util.py", line 367, in _check_version_wrapper
+    return decorated_obj(*args, **kwargs)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocol_api/instrument_context.py", line 235, in aspirate
+    self._implementation.aspirate(volume=c_vol, rate=rate)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocol_api/core/simulator/instrument_context.py", line 58, in aspirate
+    assert (
+AssertionError: Cannot aspirate more than pipette max volume
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 371, in simulate
+    execute.run_protocol(protocol, context)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/execution/execute.py", line 27, in run_protocol
+    run_python(protocol, context)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/execution/execute_python.py", line 71, in run_python
+    raise ExceptionInProtocolError(e, tb, str(e), frame.lineno) from e
+opentrons.protocols.execution.errors.ExceptionInProtocolError: AssertionError [line 32]: Cannot aspirate more than pipette max volume
+
+```
+can you fix it? Make sure you only answer Python script.
+answer:*************************
+Thank you for pointing out the error. It seems I need to change the pipette type to accommodate larger volumes. Here's the modified Python script:
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'apiLevel': '2.11'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Labware
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '1')
+    tiprack = protocol.load_labware('opentrons_96_tiprack_1000ul', '2')
+    waste_container = protocol.load_labware('nest_1_reservoir_90ml', '3')
+    eppendorf_rack = protocol.load_labware('opentrons_24_tuberack_eppendorf_1.5ml_safelock_snapcap', '4')
+    
+    # Pipette
+    pipette = protocol.load_instrument('p1000_single_gen2', 'right', tip_racks=[tiprack])
+    
+    # Antibody and cells
+    antibody_well = eppendorf_rack['A1']
+    cell_wells = plate.wells()
+
+    # Immunostaining procedure
+    pipette.pick_up_tip()
+    for cell_well in cell_wells:
+        # Aspirate antibody
+        pipette.aspirate(1000, antibody_well)
+        
+        # Dispense antibody into cell well
+        pipette.dispense(1000, cell_well)
+
+        # Mix the antibody and cells
+        pipette.mix(3, 1000, cell_well)
+        
+    # Dispose remaining liquid in waste
+    pipette.dispense(1000, waste_container['A1'])
+    pipette.drop_tip()
+```
+
+This script now uses the p1000 pipette, which should resolve the error.
+
+
+:*************************
+
+

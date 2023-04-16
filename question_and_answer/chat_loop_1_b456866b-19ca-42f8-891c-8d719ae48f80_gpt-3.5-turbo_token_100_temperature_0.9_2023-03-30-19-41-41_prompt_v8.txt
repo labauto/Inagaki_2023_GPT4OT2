@@ -1,0 +1,86 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+We are cultureing hMSC cells (2,500 cells/100 µl) with DMEM in 6 well plates, and we want to make hMSC spheroids (2,500 cells) in 96 well plates with two different conditions, 1) With osteoinduction supplements (OS+) and 2) Without osteoinduction supplements (OS-). For osteoinduction supplements, we use Dexamethasone, Ascorbic acid, and beta-glycerophosphate.
+
+
+For OS(-)
+- use 100 µl medium (DMEM) each well
+For OS(+)
+- use 100 µl medium (DMEM high glucose) each well and add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well.
+
+Write a Python script that does the following:
+- Transfer 100 µl of medium (DMEM) to each well of 96 well plate (OS-)
+- Transfer 100 µl of medium (DMEM high glucose) to each well of 96 well plate (OS+)
+- Add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well of 96 well plate (OS+)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS-)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS+)
+- End
+
+Mmake sure that if the code is long, split the code into multiple tiny functions and use it later in the main function. Ideally, split the experiment into multiple steps, and for each step, write a function that does the step. And then, call the function in the main function.
+
+
+
+###
+
+
+    
+answer:*************************
+Sure! Here's an example Python script that you can use as a starting point:
+
+```python
+from opentrons import robot, containers, instruments
+
+def transfer_medium(pipette, source, dest):
+    pipette.transfer(100, source, dest, new_tip='always')
+
+def add_supplements(pipette, dest):
+    pipette.distribute([0.1, 1, 1], dest)
+
+def transfer_cells(pipette, source, dest):
+    pipette.transfer(100, source, dest, new_tip='always')
+
+def main():
+    robot.connect()
+    robot.home()
+
+    # Define the 96 well plates
+    plate_os_neg = containers.load('96-flat', 'B1')
+    plate_os_pos = containers.load('96-flat', 'C1')
+
+    # Define the tip rack
+    tiprack = containers.load('tiprack-200ul', 'A1')
+
+    # Define the pipettes
+    pipette_200 = instruments.P200_Single(mount='right', tip_racks=[tiprack])
+
+    # Transfer medium to the wells of the 96 well plates
+    transfer_medium(pipette_200, 'DMEM', plate_os_neg)
+    transfer_medium(pipette_200, 'DMEM high glucose', plate_os_pos)
+
+    # Add supplements to the wells of the OS+ plate
+    add_supplements(pipette_200, plate_os_pos)
+
+    # Transfer cells to the wells of the 96 well plates
+    transfer_cells(pipette_200, 'hMSC cells 2,500 cells/100 µl', plate_os_neg)
+    transfer_cells(pipette_200, 'hMSC cells 2,500 cells/100 µl', plate_os_pos)
+
+    # Disconnect from the robot
+    robot.disconnect()
+
+if __name__ == '__main__':
+    main()
+```
+In this script, we define four functions to handle each step of the experiment (`transfer_medium()`, `add_supplements()`, `transfer_cells()`, and `main()`), as well as the containers and pipettes we'll be using. 
+
+The `main()` function is where the bulk of the work happens - it connects to the robot, calls the other functions in order to carry out the experiment, and then disconnects from the robot. 
+
+Note that since we cannot simulate Opentrons machine here, you will need to modify the function arguments to match your own setup, and you will need to ensure that the labware and pipette tips are properly loaded on the robot. Also, have a look at the Opentrons documentation to ensure all commands are correct.
+
+
+:*************************
+
+

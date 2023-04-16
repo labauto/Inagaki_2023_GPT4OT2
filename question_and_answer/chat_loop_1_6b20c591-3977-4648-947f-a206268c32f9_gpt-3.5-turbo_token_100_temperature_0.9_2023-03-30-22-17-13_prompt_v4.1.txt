@@ -1,0 +1,95 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+We are cultureing hMSC cells (2,500 cells/100 µl) with DMEM in 6 well plates, and we want to make hMSC spheroids (2,500 cells) in 96 well plates with two different conditions, 1) With osteoinduction supplements (OS+) and 2) Without osteoinduction supplements (OS-). For osteoinduction supplements, we use Dexamethasone, Ascorbic acid, and beta-glycerophosphate.
+
+
+For OS(-)
+- use 100 µl medium (DMEM) each well
+For OS(+)
+- use 100 µl medium (DMEM high glucose) each well and add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well.
+
+Write a Python script that does the following:
+- Transfer 100 µl of medium (DMEM) to each well of 96 well plate (OS-)
+- Transfer 100 µl of medium (DMEM high glucose) to each well of 96 well plate (OS+)
+- Add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well of 96 well plate (OS+)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS-)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS+)
+- End
+
+Mmake sure that if the code is long, split the code into multiple tiny functions and use it later in the main function. Ideally, split the experiment into multiple steps, and for each step, write a function that does the step. And then, call the function in the main function.
+
+
+
+###
+
+
+    
+answer:*************************
+Sure! Here's an example Python script that should do what you need:
+
+```python
+from opentrons import labware, instruments
+
+# Set up labware
+source_plate = labware.load('corning_96_wellplate_360ul_flat', '1')
+target_plate_os_minus = labware.load('corning_96_wellplate_360ul_flat', '2')
+target_plate_os_plus = labware.load('corning_96_wellplate_360ul_flat', '3')
+
+# Set up pipettes
+pipette_100 = instruments.P100_Single(mount='right')
+
+def transfer_medium(volume, source_well, target_well):
+    # Transfer medium (DMEM) to each well
+    pipette_100.transfer(volume, source_plate.wells(source_well),
+                         target_plate_os_minus.wells(target_well))
+
+def add_osteo_induction_supplements(dex_volume, aa_volume, bgp_volume, target_well):
+    # Add Dex, AA, and BGP to each well in the OS+ plate
+    pipette_100.transfer(dex_volume, source_plate.wells('A1'),
+                         target_plate_os_plus.wells(target_well))
+    pipette_100.transfer(aa_volume, source_plate.wells('A2'),
+                         target_plate_os_plus.wells(target_well))
+    pipette_100.transfer(bgp_volume, source_plate.wells('A3'),
+                         target_plate_os_plus.wells(target_well))
+
+def transfer_cells(volume, source_well, target_well):
+    # Transfer cells to each well
+    pipette_100.transfer(volume, source_plate.wells(source_well),
+                         target_plate_os_minus.wells(target_well))
+    pipette_100.transfer(volume, source_plate.wells(source_well),
+                         target_plate_os_plus.wells(target_well))
+
+def run_experiment():
+    # Transfer medium to all wells in both plates
+    for well_idx in range(96):
+        transfer_medium(100, well_idx, well_idx)
+
+    # Add osteoinduction supplements to OS+ plate
+    for well_idx in range(96):
+        add_osteo_induction_supplements(0.1, 1, 1, well_idx)
+
+    # Add cells to all wells in both plates
+    for well_idx in range(96):
+        transfer_cells(100, 0, well_idx)
+
+if __name__ == '__main__':
+    run_experiment()
+```
+
+Here's how the script works:
+- We first set up our labware using the `labware.load()` method from Opentrons. We'll be using a source plate (where we'll get the cells, medium, and osteoinduction supplements), and two target plates (one for OS+ and one for OS-).
+- We also set up our pipettes using the `instruments.P100_Single()` method. We're using a single-channel P100 pipette.
+- Next, we define four functions: `transfer_medium`, `add_osteo_induction_supplements`, `transfer_cells`, and `run_experiment`. These functions each perform one step of the experiment (i.e., transfer medium, add supplements, transfer cells), and we'll call them in the `run_experiment` function.
+- Finally, we define the `run_experiment` function, which calls our four sub-functions to perform the entire experiment. We transfer medium to all wells in both plates, add osteoinduction supplements to the OS+ plate, and transfer cells to all wells in both plates.
+- At the end, we call `run_experiment()` to start the process.
+
+Note: The actual Opentrons protocol would likely include additional steps for things like pause/wait times, calibration, etc. However, this script should give you a basic idea of how to automate this experiment using Python and Opentrons.
+
+
+:*************************
+
+

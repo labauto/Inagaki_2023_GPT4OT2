@@ -1,0 +1,72 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+We are cultureing hMSC cells (2,500 cells/100 µl) with DMEM in 6 well plates, and we want to make hMSC spheroids (2,500 cells) in 96 well plates with two different conditions, 1) With osteoinduction supplements (OS+) and 2) Without osteoinduction supplements (OS-). For osteoinduction supplements, we use Dexamethasone, Ascorbic acid, and beta-glycerophosphate.
+
+
+For OS(-)
+- use 100 µl medium (DMEM) each well
+For OS(+)
+- use 100 µl medium (DMEM high glucose) each well and add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well.
+
+Write a Python script that does the following:
+- Transfer 100 µl of medium (DMEM) to each well of 96 well plate (OS-)
+- Transfer 100 µl of medium (DMEM high glucose) to each well of 96 well plate (OS+)
+- Add 0.1 µl of Dex (Dexamethasone), 1 µl of AA (Ascorbic acid), and 1 µl of BGP (beta-glycerophosphate) to each well of 96 well plate (OS+)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS-)
+- Transfer 100 µl of hMSC cells (2,500 cells/100 µl) to each well of 96 well plate (OS+)
+- End
+    
+answer:*************************
+Sure, here is a Python script that will perform the experiment you described using the Opentrons machine:
+
+```python
+from opentrons import protocol_api
+
+metadata = {'apiLevel': '2.8'}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Load 96 well plate and 6 well plate
+    source_plate = protocol.load_labware('corning_96_wellplate_360ul_flat', '1')
+    dest_plate_os_pos = protocol.load_labware('corning_96_wellplate_360ul_flat', '2')
+    dest_plate_os_neg = protocol.load_labware('corning_96_wellplate_360ul_flat', '3')
+    source_6_well_plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '4')
+
+    # Load tips
+    tips20 = protocol.load_labware('opentrons_96_tiprack_20ul', '5')
+
+    # Set pipettes
+    pipette_20 = protocol.load_instrument('p20_single_gen2', 'left', tip_racks=[tips20])
+
+    # Transfer DMEM to each well (OS-)
+    pipette_20.pick_up_tip()
+    for dest_well in dest_plate_os_neg.rows()[0]:
+        pipette_20.transfer(100, source_plate.wells_by_name()['A1'], dest_well, new_tip='never')
+    pipette_20.drop_tip()
+
+    # Transfer DMEM high glucose to each well (OS+) and add supplements
+    pipette_20.pick_up_tip()
+    for dest_well in dest_plate_os_pos.rows()[0]:
+        pipette_20.transfer(100, source_plate.wells_by_name()['A1'], dest_well, new_tip='never')
+        pipette_20.transfer(0.1, source_6_well_plate.wells_by_name()['A1'], dest_well, new_tip='never')
+        pipette_20.transfer(1, source_6_well_plate.wells_by_name()['B1'], dest_well, new_tip='never')
+        pipette_20.transfer(1, source_6_well_plate.wells_by_name()['C1'], dest_well, new_tip='never')
+    pipette_20.drop_tip()
+
+    # Transfer hMSC cells to each well (OS- and OS+)
+    pipette_20.pick_up_tip()
+    for dest_well_os_neg, dest_well_os_pos in zip(dest_plate_os_neg.rows()[0], dest_plate_os_pos.rows()[0]):
+        pipette_20.transfer(100, source_6_well_plate.wells_by_name()['A1'], dest_well_os_neg, new_tip='never')
+        pipette_20.transfer(100, source_6_well_plate.wells_by_name()['A2'], dest_well_os_pos, new_tip='never')
+    pipette_20.drop_tip()
+```
+
+Before running this script, you will need to connect to the Opentrons machine and make sure you have the correct pipette and labware set up. You can modify the script to adjust the volumes or the specific labware you are using.
+
+
+:*************************
+
+

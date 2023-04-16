@@ -1,0 +1,82 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Prepare immunostained iPS cells to visualize E-Cadherin.
+The cell is cultured in 6 well plate.
+    
+answer:*************************
+To run an experiment using the Opentrons machine, you need to write a Python script using the Opentrons API. Below is an example of a basic script that performs the required experiment. Please note that you need to adjust your labware, stock solutions, and other parameters based on your specific requirements.
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'E-Cadherin Immunostaining on iPS Cells',
+    'author': 'Your Name',
+    'description': 'E-Cadherin immunostaining on iPS cells in a 6 well plate',
+    'apiLevel': '2.9'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Labware
+    well_plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '1')
+    tiprack_300 = protocol.load_labware('opentrons_96_tiprack_300ul', '2')
+    reservoir = protocol.load_labware('usascientific_12_reservoir_22ml', '3')
+
+    # Pipettes
+    pipette_300 = protocol.load_instrument('p300_single', 'right', tip_racks=[tiprack_300])
+
+    # Stock solutions
+    solution_1 = reservoir.wells_by_name()['A1']
+    solution_2 = reservoir.wells_by_name()['A2']
+    wash_buffer = reservoir.wells_by_name()['A3']
+
+    # Staining process
+    for well in well_plate.wells():
+        # Add solution_1 (primary antibody)
+        pipette_300.pick_up_tip()
+        pipette_300.aspirate(100, solution_1)
+        pipette_300.dispense(100, well)
+        pipette_300.drop_tip()
+
+        # Wash
+        pipette_300.pick_up_tip()
+        for _ in range(3):
+            pipette_300.aspirate(300, wash_buffer)
+            pipette_300.dispense(300, well)
+        pipette_300.drop_tip()
+
+        # Add solution_2 (secondary antibody)
+        pipette_300.pick_up_tip()
+        pipette_300.aspirate(100, solution_2)
+        pipette_300.dispense(100, well)
+        pipette_300.drop_tip()
+
+        # Wash
+        pipette_300.pick_up_tip()
+        for _ in range(3):
+            pipette_300.aspirate(300, wash_buffer)
+            pipette_300.dispense(300, well)
+        pipette_300.drop_tip()
+
+    # Finalize by removing any remaining buffer
+    for well in well_plate.wells():
+        pipette_300.pick_up_tip()
+        pipette_300.aspirate(300, well)
+        pipette_300.dispense(300, reservoir.wells_by_name()['A12'])
+        pipette_300.drop_tip()
+
+    protocol.comment("The immunostaining process is complete.")
+```
+
+This protocol assumes that you have the primary antibody solution (solution_1), secondary antibody solution (solution_2), and a wash buffer in reservoir 'A1', 'A2', and 'A3', respectively. Remember to replace 'Your Name' in the metadata with your actual name.
+
+To execute this protocol, you need to install the Opentrons software on your computer and connect it to the robot, then upload and run the protocol using the software. More information can be found in the Opentrons documentation: https://docs.opentrons.com/
+
+
+:*************************
+
+

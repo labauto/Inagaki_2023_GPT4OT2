@@ -1,0 +1,28 @@
+prompt:*************************
+ I got this error: ```python
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 110, in _parse_python
+    parsed = ast.parse(protocol_contents, filename=ast_filename)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/ast.py", line 47, in parse
+    return compile(source, filename, mode, flags,
+  File "./question_and_answer/tmp/tmp_05324532-8126-448d-8a7d-64b399a9e7bc.py", line 1
+    Yes, the error message suggests that the pipette is trying to aspirate more volume than its maximum. You will need to change the volume to be aspirated to a value less than or equal to the pipette's maximum volume. Here is an updated version of the Python script that limits the maximum volume to be aspirated to 300 µL:
+             ^
+SyntaxError: invalid syntax
+
+```, can you fix it? Make sure you only answer Python script. If you don't know how to fix it, say 'I don't know'.
+answer:*************************
+I don't know.
+
+
+:*************************
+
+

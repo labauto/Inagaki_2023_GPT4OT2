@@ -1,0 +1,85 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+To run an experiment using the Opentrons robot, you first need to install the Opentrons API. You can do this by following the instructions in their documentation at https://docs.opentrons.com/.
+
+Once you have the API installed, you can start creating your Python script by importing the API and defining the labware, instruments, and necessary reagents. Below is a Python script to perform the desired experiment:
+
+```python
+import opentrons.execute
+from opentrons import protocol_api
+
+def run(protocol: protocol_api.ProtocolContext):
+
+    # Labware
+    tiprack_300 = protocol.load_labware('opentrons_96_tiprack_300ul', '2')  # 300ul tiprack
+    pbs_plate = protocol.load_labware('corning_96_wellplate_360ul_flat', '3')  # PBS(-) plate
+    dmem_plate = protocol.load_labware('corning_96_wellplate_360ul_flat', '4')  # D-MEM plate
+    cell_plate = protocol.load_labware('nest_6_wellplate_20ml_flat', '1')  # 6-well cell culture plate
+
+    # Pipettes
+    p300 = protocol.load_instrument('p300_multi_gen2', 'left', tip_racks=[tiprack_300])
+
+    # Variables
+    volume_pbs = 200  # volume of PBS to aspirate
+    volume_dmem = 200  # volume of D-MEM to aspirate
+    mix_iterations = 3  # number of mix iterations
+
+    # Protocol
+    for well_idx in range(6):
+        p300.pick_up_tip()
+
+        # Aspirate PBS
+        p300.aspirate(volume_pbs, pbs_plate.wells()[well_idx])
+        p300.dispense(volume_pbs, cell_plate.wells()[well_idx].bottom(10))
+        p300.mix(mix_iterations, volume_pbs / 2, cell_plate.wells()[well_idx].bottom(10))
+        p300.blow_out(cell_plate.wells()[well_idx].top())
+
+        # Aspirate cell solution
+        p300.aspirate(volume_pbs, cell_plate.wells()[well_idx].bottom(10))
+        p300.dispense(volume_pbs, pbs_plate.wells()[well_idx].top())
+        p300.blow_out(pbs_plate.wells()[well_idx].top())
+
+        # Aspirate D-MEM
+        p300.aspirate(volume_dmem, dmem_plate.wells()[well_idx])
+        p300.dispense(volume_dmem, cell_plate.wells()[well_idx].bottom(10))
+        p300.mix(mix_iterations, volume_dmem / 2, cell_plate.wells()[well_idx].bottom(10))
+        p300.blow_out(cell_plate.wells()[well_idx].top())
+
+        p300.drop_tip()
+
+    protocol.comment("Protocol complete!")
+
+
+# Execute the protocol
+protocol = opentrons.execute.get_protocol_api('2.11')
+run(protocol)
+```
+
+In this script:
+
+- Labware is defined and loaded.
+- Pipettes are loaded.
+- Variables for volumes and mix iterations are defined.
+- The protocol steps, which involve aspirating and dispensing solutions according to your requirements, are executed for each well.
+
+Save this script and run it using your Opentrons environment.
+
+Please note that you should replace the labware names (e.g., "opentrons_96_tiprack_300ul") with the appropriate labware definitions for your specific setup. You can find the labware definitions library at: https://labware.opentrons.com/.
+
+
+:*************************
+
+

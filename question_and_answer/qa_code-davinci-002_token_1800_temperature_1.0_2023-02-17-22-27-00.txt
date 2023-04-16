@@ -1,0 +1,251 @@
+prompt:*************************
+ Answer the question based on the context below, and if the question can't be answered based on the context, say "I don't know"
+
+Context: Media Exchange
+
+Description: This protocol automates Media Exchange and is part of a five protocol suite. The five protocols are:Protocol 1: Seeding Plates with Mammalian CellsProtocol 2: DAPI StainingProtocol 3: Fix and DAPI StainProtocol 4: Media ExchangeProtocol 5: Primary StainingThe protocol begins with an empty reservoir for liquid waste, a 12-channel reservoir that contains what will be added to the plates, tips, eppendorf plate(s), and the P300-Multi attached to the left mount. Using up to 4 plates, the protocol will iterate through each plate, adding reagents to the plate and removing liquid.The following steps are performed to each plate:Remove 120µL of mediaAdd 140µL of differentiation mediaIf necessary (can select 'yes' or 'no' under Second Exchange)Remove 140µL of differentiation mediaAdd 140µL of differentiation mediaIf you have any questions about this protocol, please email our Applications Engineering team at protocols@opentrons.com.To purchase tips, reagents, or pipettes, please visit our online store or contact our sales team at info@opentrons.comOpentrons OT-2Opentrons OT-2 Run App (Version 3.19.0 or later)Opentrons p300 Multi-Channel Pipette, GEN2Opentrons TipsNEST 12-Well Reservoir, 15mLNEST 1-Well Reservoir, 195mLEppendorf PlateReagentsSlot 1: Opentrons Tips, note: protocol saves tip state and will prompt user to replace tips when new tips are needed.Slot 2: Eppendorf Plate (Plate 1)Slot 3: Eppendorf Plate (Plate 2)Slot 4: Eppendorf Plate (Plate 3)Slot 5: Eppendorf Plate (Plate 4)Slot 5: Eppendorf Plate (Plate 5)Slot 6: Eppendorf Plate (Plate 6)Slot 10: NEST 12-Well Reservoir, 15mLColumns 1-6: Differentiation Media (for 1st exchange)Columns 7-22: Differentiation Media (for 2nd exchange)Slot 11: NEST 1-Well Reservoir, 195mL, for liquid wasteNote: When filling the 12-well reservoirs with reagents, each column corresponds to a plate (there are 6 columns allocated per reagent). For example, if running this protocol with two (2) plates, columns 1 and 2 would be filled with differentiation media. If also doing the second exchange, then columns 7 and 8 would also need to be filled.Using the customizations field (below), set up your protocol.Number of Plates: Specify the number of plates (1-4) to use.Aspiration/Dispense Speed: Specify the aspiration/dispense speed of the pipette (in µL/sec). Note: default rate is 43.46µL/sec.Aspiration Height: Specify how high (in mm) from the bottom of the well the pipette should be in the plate when aspirating.Dispense Height: Specify how high (in mm) from the bottom of the well the pipette should be in the plate when dispensing.Second Exchange: Select whether or not to perform a second exchange of differentiation media.
+
+Labware: None
+
+Pipettes: None
+
+Protocol Steps: Noneimport csv
+import os
+
+metadata = {
+    'protocolName': 'Media Exchange',
+    'author': 'Chaz <chaz@opentrons.com>',
+    'source': 'Custom Protocol Request',
+    'apiLevel': '2.5'
+}
+
+
+def run(protocol):
+    [num_plates, asp_speed,
+     asp_height, disp_height, sec_ex] = get_values(  # noqa: F821
+        'num_plates', 'asp_speed', 'asp_height', 'disp_height', 'sec_ex')
+
+    # load labware and pipettes
+    tips300 = protocol.load_labware('opentrons_96_tiprack_300ul', '1')
+
+    if num_plates > 6:
+        raise Exception('This protocol can only accommodate up to 6 plates')
+
+    plates = [
+        protocol.load_labware(
+            'eppendorf_96_wellplate_200ul',
+            str(s)) for s in range(2, 8)][:num_plates]
+
+    res = protocol.load_labware('nest_12_reservoir_15ml', '10')
+    media1 = res.wells()[:num_plates]
+    media2 = res.wells()[6:6+num_plates]
+
+    waste = protocol.load_labware('nest_1_reservoir_195ml', '11',
+                                  'Liquid Waste').wells()[0].top()
+
+    p300 = protocol.load_instrument('p300_multi_gen2', 'left')
+
+    p300.flow_rate.aspirate = asp_speed
+    p300.flow_rate.dispense = asp_speed
+    p300.flow_rate.blow_out = 300
+
+    # create pick_up function for tips
+    # Tip tracking between runs
+    if not protocol.is_simulating():
+        file_path = '/data/csv/tiptracking.csv'
+        file_dir = os.path.dirname(file_path)
+        # check for file directory
+        if not os.path.exists(file_dir):
+            os.makedirs(file_dir)
+        # check for file; if not there, create initial tip count tracking
+        if not os.path.isfile(file_path):
+            with open(file_path, 'w') as outfile:
+                outfile.write("0, 0\n")
+
+    tip_count_list = []
+    if protocol.is_simulating():
+        tip_count_list = [0, 0]
+    else:
+        with open(file_path) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            tip_count_list = next(csv_reader)
+
+    tip300count = int(tip_count_list[0])
+
+    def pick_up():
+        nonlocal tip300count
+
+        if tip300count == 12:
+            for _ in range(6):
+                protocol.set_rail_lights(not protocol.rail_lights_on)
+                protocol.delay(seconds=1)
+            protocol.pause('Please replace tips.')
+            p300.reset_tipracks()
+            tip300count = 0
+        p300.pick_up_tip(tips300.rows()[0][tip300count])
+        tip300count += 1
+
+    for idx, (plate, res_src) in enumerate(zip(plates, media1)):
+        wells = plate.rows()[0]
+        protocol.comment(f'Removing media from plate {idx+1}...')
+        pick_up()
+        for well in wells:
+            p300.aspirate(120, well.bottom(asp_height))
+            p300.dispense(120, waste)
+        protocol.comment(f'Adding differentiation media to plate {idx+1}...')
+        for well in wells:
+            p300.aspirate(140, res_src)
+            p300.dispense(140, well.bottom(disp_height))
+        p300.drop_tip()
+
+    if sec_ex == 'Yes':
+        for idx, (plate, res_src) in enumerate(zip(plates, media2)):
+            wells = plate.rows()[0]
+            protocol.comment(f'Removing 140uL media from plate {idx+1}...')
+            pick_up()
+            for well in wells:
+                p300.aspirate(140, well.bottom(asp_height))
+                p300.dispense(140, waste)
+            protocol.comment(f'Adding differentiation media to plate {idx+1}')
+            for well in wells:
+                p300.aspirate(140, res_src)
+                p300.dispense(140, well.bottom(disp_height))
+            p300.drop_tip()
+
+    # write updated tipcount to CSV
+    new_tip_count = str(tip300count)+", "+str(tip_count_list[1])+"\n"
+    if not protocol.is_simulating():
+        with open(file_path, 'w') as outfile:
+            outfile.write(new_tip_count)
+
+    protocol.comment('Protocol complete!')
+
+
+---
+
+Question: Can you write Python scripts that runs this wet experiment for me using opentrons library? The experiment is as follows:
+
+Description: Cell medium change
+
+Protocol Steps:
+1. Wash the cell culture dish (90 mm) with PBS(-) by pipetting up and down 5 times. For each wash, use 2 ml of PBS(-) in the 50 ml tube.
+2. After washing, add 3 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 10 mL of cell culture medium (DMEM) to the cell culture dish.
+4. Finish the experiment.
+Answer:
+answer:*************************
+def change_medium(mag_height):
+    '''
+    Function to change medium of cells, i.e. to remove media with PBS,
+    then add fresh media with 5 mL of Trypsin solution, leave it for 5
+    minutes and then add media to the dish.
+    
+    Inputs:
+    mag_height: hours before setting magnetic beads, numeric
+    cells_plate: well with least number of beads*
+
+    *: This is calculated till this step, include it if you want to do that later.
+
+    Modified from protocol: Magnetic beads - Staining
+    '''
+    # Load reusable labware
+    if 'Reacti-Therm Plus Heating Module' not in robot.get_installed_modules():
+        raise Exception('Please install Reacti-Therm Plus Heating Module first')
+    reacti_block = labware.load('reacti_thermplus_block', slot='1')
+    p300rack = labware.load('opentrons_96_tiprack_300ul', slot='2')
+    trough_1 = labware.load('trough-12row', slot='3')
+    trough_2 = labware.load('trough-12row', slot='4')
+    trough_3 = labware.load('trough-12row', slot='5')
+    trough_4 = labware.load('trough-12row', slot='6')
+    pcr_plate = labware.load('biorad_96_wellplate_200ul_pcr', slot='10')
+    tube_3 = labware.load('opentrons_24_tuberack_nest_1.5ml_snapcap', slot='12')
+
+    # Fixed labware
+    dilution_plate = labware.load('biorad_96_wellplate_200ul_pcr', '7', share=True)
+    waste_tube = labware.load('opentrons_24_tuberack_nest_1.5ml_snapcap', '11', share=True)
+    waste = waste_tube['A2'].bottom(3)
+
+    # Liquid transfer settings
+    # mag_height = 2
+
+    tip_vol = 300
+    wtvol = 1800
+    incvol = 220
+
+    # Tip composition settings
+    tip_300 = p300rack['A'].top()
+
+    # Pipetting setup
+    p300 = instruments.P300_Single(mount="left", tip_racks=[p300rack])
+
+    # Protocol Steps Begins: need 3 ml of 0.25% Trypsin in 50 ml tube
+    # Wash with PBS(-)
+    tips_needed = len(pcr_plate.columns()) * 10
+    if len(p300rack.rows()) < tips_needed / 8 + 1:
+        raise Exception('Please add more tipracks to slot 2')
+    if len(dilution_plate.columns()) < tips_needed / 8 + 1:
+        raise Exception('Please add dilution plate to 7')
+    p300.pick_up_tip(tip_300)
+    for col in pcr_plate.columns():
+        p300.aspirate((60*wtvol + 20*wtvol)/tip_vol,p300.current_volume)
+        for i in range(2*12):
+            p300.aspirate(60*wtvol/tip_vol, trough_1.wells()[i].bottom(wtvol/tip_vol+2))
+            p300.dispense(60*wtvol/tip_vol, col.top(-wtvol/tip_vol-1))
+            # Return media to original well
+            p300.aspirate(60*wtvol/tip_vol, col.top(-wtvol/tip_vol-5))
+            p300.dispense(60*wtvol/tip_vol, trough_1.wells()[i].bottom(mag_height*wtvol/tip_vol+2))
+        # Remove media in 90 mm plate
+        p300.dispense(wtvol*(10+1)/tip_vol, waste)
+    p300.drop_tip()
+
+    # Add media first
+    tips_needed = 2
+    if len(p300rack.rows()) < tips_needed / 8 + 1:
+        raise Exception('Please add more tipracks to slot 2')
+    for i in range(tips_needed):
+        p300.pick_up_tip(tip_300)
+        p300.aspirate((200*wtvol + 10*wtvol)/tip_vol,p300.current_volume_.magnitude)
+        for j in range(2):
+            p300.aspirate(incvol*wtvol/tip_vol, tube_3.wells()[0].bottom(wtvol/tip_vol+2))
+            p300.dispense(incvol*wtvol/tip_vol, pcr_plate.wells()[i].top(-wtvol/tip_vol-1))
+            p300.aspirate(incvol*wtvol/tip_vol, pcr_plate.wells()[i].top(-wtvol/tip_vol-5))
+            p300.dispense(incvol*wtvol/tip_vol, tube_3.wells()[0].bottom(wtvol/tip_vol+2))
+        p300.dispense(30*wtvol/tip_vol, waste)
+        p300.drop_tip()
+
+    # Add trypsin now
+    if robot.is_simulating():
+        return
+    Protocol.pause_comment('Leave at 37 degrees for 3 mins')
+    for i in range(3):
+        reacti_block.set_temperature(37,wait_time=60)
+
+    tips_needed = 2
+    if len(p300rack.rows()) < tips_needed / 8 + 1:
+        raise Exception('Please add more tipracks to slot 2')
+    for i in range(tips_needed):
+        p300.pick_up_tip(tip_300)
+        p300.aspirate((40*wtvol + 5*wtvol)/tip_vol,p300.current_volume_.magnitude)
+        for j in range(1):
+            p300.aspirate(wtvol/tip_vol, tube_3.wells()[0].bottom(wtvol/tip_vol+2))
+            p300.dispense(720*wtvol/tip_vol, pcr_plate.wells()[i].bottom(wtvol/tip_vol+2))
+            p300.aspirate(380*wtvol/tip_vol, pcr_plate.wells()[i].bottom(-wtvol/tip_vol-5))
+            p300.dispense(380*wtvol/tip_vol, tube_3.wells()[0].bottom(wtvol/tip_vol+2))
+        p300.drop_tip()
+    Protocol.pause_comment('Leave at 37 degrees for 5 mins')
+    for i in range(3):
+        reacti_block.set_temperature(37,wait_time=60)
+
+    # Add fresh media
+    for i in range(tips_needed):
+        p300.pick_up_tip(tip_300)
+        p300.aspirate((200*wtvol + 10*wtvol)/tip_vol,p300.current_volume_.magnitude)
+        for j in range(2):
+            p300.aspirate(incvol*wtvol/tip_vol, tube_3.wells()[0].bottom(wtvol/tip_vol+2))
+            p300.dispense(incvol*wtvol/tip_vol, pcr_plate.wells()[i].top(-wtvol/tip_vol-1))
+           
+
+
+:*************************
+
+

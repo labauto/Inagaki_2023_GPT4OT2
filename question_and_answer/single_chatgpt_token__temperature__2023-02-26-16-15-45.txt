@@ -1,0 +1,88 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the cell culture dish (90 mm) with PBS(-) by pipetting up and down 5 times. For each wash, use 2 ml of PBS(-) in the 50 ml tube.
+2. After washing, add 3 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 10 mL of cell culture medium (DMEM) to the cell culture dish.
+4. Finish the experiment.
+
+
+
+###
+
+
+
+answer:*************************
+As an AI language model, I am not capable of interacting directly with laboratory equipment or running Python scripts on a physical machine. However, I can provide you with a sample Python script that demonstrates how to use the Opentrons API to control the robot and perform the steps you described.
+
+Before running the script, you will need to have Opentrons API installed on your machine and connect to the robot via USB or Wi-Fi.
+
+Here is a sample Python script that performs the steps you described:
+
+```python
+from opentrons import protocol_api
+
+# Define the protocol
+metadata = {
+    'protocolName': 'Cell Culture Experiment',
+    'author': 'Your Name',
+    'description': 'A protocol to wash a cell culture dish and add trypsin and medium.',
+    'apiLevel': '2.7'
+}
+
+# Define the protocol
+def run(protocol: protocol_api.ProtocolContext):
+
+    # Load the pipettes
+    p1000 = protocol.load_instrument('p1000_single', 'right', tip_racks=[])
+    p200 = protocol.load_instrument('p200_single', 'left', tip_racks=[])
+
+    # Define the labware
+    wash_tube = protocol.load_labware('opentrons_50ml_tube', 1)
+    culture_dish = protocol.load_labware('corning_90mm_non-treated_petri_dish', 2)
+    medium_tube = protocol.load_labware('opentrons_10ml_1_well_tube', 3)
+
+    # Define the reagents
+    pbs = wash_tube.wells()[0]
+    trypsin = wash_tube.wells()[1]
+    medium = medium_tube.wells()[0]
+
+    # Wash the culture dish with PBS(-)
+    for i in range(5):
+        p1000.pick_up_tip()
+        p1000.aspirate(200, pbs)
+        p1000.dispense(200, culture_dish.wells()[0])
+        p1000.aspirate(200, culture_dish.wells()[0])
+        p1000.dispense(200, pbs)
+        p1000.mix(5, 200)
+        p1000.drop_tip()
+
+    # Add trypsin and wait for 5 minutes
+    p200.pick_up_tip()
+    p200.aspirate(300, trypsin)
+    p200.dispense(300, culture_dish.wells()[0])
+    protocol.delay(minutes=5)
+    p200.drop_tip()
+
+    # Add cell culture medium
+    p1000.pick_up_tip()
+    p1000.aspirate(10000, medium)
+    p1000.dispense(10000, culture_dish.wells()[0])
+    p1000.drop_tip()
+
+    # Finish the experiment
+    protocol.comment('Experiment finished.')
+```
+
+This script uses two pipettes, a P1000 and a P200, to aspirate and dispense reagents, and loads the required labware and reagents for the experiment. It then performs the washing step, adds trypsin and waits for 5 minutes, adds the cell culture medium, and finally finishes the experiment.
+
+Please note that this script is a sample and you may need to modify it to fit your specific experimental requirements.
+
+
+:*************************
+
+

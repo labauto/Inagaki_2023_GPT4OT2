@@ -1,0 +1,89 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well, use 1 ml of PBS(-).
+2. After washing, add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 1 mL of cell culture medium (DMEM) to the 6 well plate.
+4. Finish the experiment.
+
+Possible Labware and Pipettes (Note that you don't need to trust these items, you can use any labware and pipette you want):
+1. `opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical`
+2. `p1000_single`
+3. `corning_6_wellplate_16.8ml_flat`
+
+When writing scripts, be aware of the following:
+1. Do not aspirate more than pipette's max volume. For example, if you want to aspirate 2000 µL with a p1000_single, you need to split it into two commands.
+2. Check the number of tips you use to avoid running out of tips.
+3. when load_labware('name', slot), you can't declare the same slot twice, you need to use different slots for different labware.
+
+
+
+###
+
+
+
+answer:*************************
+Here is a Python script to control the Opentrons machine for your desired experiment using the Opentrons API:
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'apiLevel': '2.10',
+    'protocolName': 'Automated Lab Experiment'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    
+    # Load labware
+    tiprack = protocol.load_labware('opentrons_96_tiprack_1000ul', '1')
+    tube_rack = protocol.load_labware('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '2')
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '3')
+
+    # Load pipette
+    p1000 = protocol.load_instrument('p1000_single', 'right', tip_racks=[tiprack])
+
+    # Locate reagents
+    pbs = tube_rack.wells_by_name()['A1']
+    trypsin = tube_rack.wells_by_name()['B1']
+    dmem = tube_rack.wells_by_name()['A2']
+
+    # Step 1: Wash the wells with 1 ml of PBS(-)
+    for well in plate.wells():
+        p1000.pick_up_tip()
+        for _ in range(5):  # repeat 5 times
+            p1000.aspirate(1000, pbs)
+            p1000.dispense(1000, well)
+        p1000.drop_tip()
+
+    # Step 2: Add 1 ml of trypsin solution (0.25%) to the wells
+    for well in plate.wells():
+        p1000.pick_up_tip()
+        p1000.aspirate(1000, trypsin)
+        p1000.dispense(1000, well)
+        p1000.drop_tip()
+
+    # Pause for 5 minutes
+    protocol.delay(minutes=5)
+
+    # Step 3: Add 1 mL of cell culture medium (DMEM) to the 6 well plate
+    for well in plate.wells():
+        p1000.pick_up_tip()
+        p1000.aspirate(1000, dmem)
+        p1000.dispense(1000, well)
+        p1000.drop_tip()
+
+    # Step 4: Finish the experiment
+    protocol.comment("Experiment finished.")
+```
+
+You can modify and run the protocol script with your Opentrons machine's specific labware configuration as required. Make sure you have installed the required Opentrons Python API on your computer.
+
+
+:*************************
+
+

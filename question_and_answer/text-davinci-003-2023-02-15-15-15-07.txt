@@ -1,0 +1,50 @@
+prompt:*************************
+ 
+Can you write Python scripts that runs this wet experiment for me using opentrons library?
+
+Protocols:
+1. Wash the cell culture dish with PBS(-) by pipetting up and down 5 times. For each wash, use 2 ml of PBS(-) in the tube.
+2. After washing, add 3 ml of trypsin solution to the cell culture dish and incubate for 5 minutes.
+3. Then, add 10 mL of cell culture medium to the cell culture dish.
+4. Finish the experiment.
+
+
+
+###
+
+
+
+answer:*************************
+ #import OpenTrons
+from opentrons import simulate
+
+# Check simulator
+simulate.get_protocol_api('2.1')
+
+# Wash the cell culture dish with PBS(-)
+pipette.pick_up_tip()
+for _ in range(5):
+    pipette.aspirate(2, PBS___Tube)
+    pipette.dispense(2, Cell_Culture_Dish)
+    pipette.blow_out()
+pipette.drop_tip()
+
+#add trypsin solution to the cell culture dish
+pipette.pick_up_tip()
+pipette.aspirate(3, Trypsin_Tube)
+pipette.dispense(3, Cell_Culture_Dish)
+pipette.blow_out()
+pipette.drop_tip()
+
+# Incubate for 5 minutes
+# No code needed for incubation
+
+#Add 10 ml of cell culture medium
+pipette.pick_up_tip()
+pipette.aspirate(10, Cell_Culture_Medium_Tube)
+pipette.dispense(10, Cell_Culture_Dish)
+pipette.blow_out()
+pipette.drop_tip()
+
+# Finish the Experiment
+#No code needed to finish the experiment

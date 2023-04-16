@@ -1,0 +1,66 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging iPS cell culture medium using PBS(-) and D-MEM.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+    
+answer:*************************
+Below is a Python script using the Opentrons API to automate the process of exchanging the iPS cell culture medium using PBS(-) and D-MEM in a 6-well plate. Before running the script, make sure you have installed the Opentrons package by including it in your pip requirements or using `pip install opentrons`. 
+
+Please note that you might need to modify the script according to the specific labware and pipettes utilized in your platform. You can find more information about the Opentrons API and supported labware in their [official documentation](https://docs.opentrons.com/).
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'Exchange iPS Cell Culture Medium',
+    'author': 'Your Name <your_email@example.com>',
+    'description': 'iPS cell culture medium exchange using PBS(-) and D-MEM.',
+    'apiLevel': '2.11'
+}
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Labware
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', 1)
+    tiprack = protocol.load_labware('opentrons_96_tiprack_300ul', 2)
+    pbs_well = protocol.load_labware('nest_1_reservoir_195ml', 3)['A1']
+    dmem_well = protocol.load_labware('nest_1_reservoir_195ml', 4)['A1']
+
+    # Pipettes
+    pipette = protocol.load_instrument('p300_single_gen2', 'right', tip_racks=[tiprack])
+
+    # Protocol
+    for well in plate.wells():
+        # Aspirate PBS(-)
+        pipette.pick_up_tip()
+        pipette.aspirate(300, pbs_well)
+        pipette.dispense(300, well)
+        pipette.mix(3, 200, well)
+
+        # Remove aspirated PBS(-)
+        pipette.aspirate(300, well)
+        pipette.dispense(300, pbs_well)
+        pipette.drop_tip()
+
+        # Aspirate D-MEM
+        pipette.pick_up_tip()
+        pipette.aspirate(300, dmem_well)
+        pipette.dispense(300, well)
+        pipette.mix(3, 200, well)
+        pipette.drop_tip()
+```
+
+To execute this script on your Opentrons platform, please follow the instructions in the [Opentrons documentation](https://docs.opentrons.com/v2/new_protocol.html) for running a protocol.
+
+
+:*************************
+
+

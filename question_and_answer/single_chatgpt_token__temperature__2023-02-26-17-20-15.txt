@@ -1,0 +1,82 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well, use 5 ml of PBS(-).
+2. After washing, add 2 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 5 mL of cell culture medium (DMEM) to the 6 well plate.
+4. Finish the experiment.
+
+Possible Labware and Pipettes:
+1. `opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical`
+2. `p1000_single`
+3. `p300_single`
+4. `corning_6_wellplate_16.8ml_flat`
+
+When writing scripts, be aware of the following:
+1. Do not aspirate more than pipette's max volume. For example, if you use p1000_single, do not aspirate more than 1000 uL.
+2. Check the number of tips you use to avoid running out of tips.
+
+
+
+###
+
+
+
+answer:*************************
+Sure! Here's a Python script that runs the experiment you described using the specified labware and pipettes:
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'protocolName': 'Cell Culture Protocol',
+    'author': 'Your Name',
+    'description': 'A protocol for washing and trypsinizing cells in a 6 well plate.',
+    'apiLevel': '2.12'
+}
+
+# Define labware and pipettes
+tips_300 = [protocol_api.labware.load('opentrons_96_tiprack_300ul', slot)
+            for slot in ['1', '2']]
+tips_1000 = [protocol_api.labware.load('opentrons_96_tiprack_1000ul', slot)
+             for slot in ['3']]
+plate = protocol_api.labware.load('corning_6_wellplate_16.8ml_flat', '4')
+wash_tube = protocol_api.labware.load('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '5')
+trypsin_tube = protocol_api.labware.load('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '6')
+p300 = protocol_api.instruments.P300_Single(mount='left', tip_racks=tips_300)
+p1000 = protocol_api.instruments.P1000_Single(mount='right', tip_racks=tips_1000)
+
+def run(protocol: protocol_api.ProtocolContext):
+    # Wash wells with PBS(-)
+    p300.pick_up_tip()
+    for well in plate.wells():
+        for _ in range(5):
+            p300.aspirate(200, wash_tube.wells()[0])
+            p300.dispense(200, well)
+    p300.drop_tip()
+
+    # Add trypsin and wait
+    p1000.pick_up_tip()
+    for well in plate.wells():
+        p1000.aspirate(2000, trypsin_tube.wells()[0])
+        p1000.dispense(2000, well)
+    protocol.delay(minutes=5)
+
+    # Add cell culture medium
+    p1000.pick_up_tip()
+    for well in plate.wells():
+        p1000.aspirate(5000, wash_tube.wells()[0])
+        p1000.dispense(5000, well)
+    p1000.drop_tip()
+```
+
+Please note the tips and labware used in this script may vary depending on your specific requirements. Additionally, please make sure to calibrate your pipettes and check the tip usage to avoid running out of tips during the protocol.
+
+
+:*************************
+
+

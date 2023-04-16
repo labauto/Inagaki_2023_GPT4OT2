@@ -1,0 +1,140 @@
+from opentrons import labware, instruments, robot
+
+# Load labware and instruments
+plate = labware.load('96-flat', '2')
+tubes1 = labware.load('tube-rack-2ml', '6')
+tubes2 = labware.load('tube-rack-2ml', '3')
+tiprack_20ul = labware.load('tiprack-20ul', '10')
+tiprack_200ul = labware.load('tiprack-200ul', '5')
+countess = instruments.Countess3()
+p20 = instruments.P20_Single()
+p200 = instruments.P200_Single()
+
+# Clean inside of robot
+robot._hw_manager.hardware.clean()
+
+# Seeding cells
+countess.reset()
+cell_count = countess.count(cells=True, dye='trypan blue')
+cell_volume = 60 / cell_count
+p20.pick_up_tip()
+for i in range(10):
+    p20.transfer(cell_volume, tubes1[0].bottom(p20),
+                 plate.rows()[0][i].bottom(p20),
+                 new_tip='never')
+    p20.blow_out()
+p20.drop_tip()
+
+# Adding medium
+p20.pick_up_tip()
+for well in plate.rows()[4][:3]:
+    p20.transfer(60, tubes2[0].bottom(p20), well, new_tip='never')
+    p20.blow_out()
+p20.drop_tip()
+
+# Adding drug dilutions
+thapsigargin_stocks = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'B1']
+thapsigargin_concs = [1000, 100, 10, 1, 0.1, 0.05, 0.01]
+ham_f12k_diluent = tubes2[1]
+for stock, conc in zip(thapsigargin_stocks, thapsigargin_concs):
+    p200.pick_up_tip()
+    p200.transfer(100, ham_f12k_diluent, tubes1[stock].bottom(p200),
+                  new_tip='never')
+    p200.mix(3, 50, tubes1[stock])
+    p200.transfer(25, tubes1[stock], tubes2[2].bottom(p200),
+                  mix_after=(3, 50), new_tip='never')
+    p200.transfer(25, tubes1[stock], tubes2[3].bottom(p200),
+                  mix_after=(3, 50), new_tip='never')
+    p200.transfer(100, ham_f12k_diluent, tubes2[4].bottom(p200),
+                  new_tip='never')
+    p200.transfer(100, tubes2[2], tubes2[4].bottom(p200),
+                  mix_after=(3, 50), new_tip='never')
+    p200.drop_tip()
+
+# Adding drug concentrations
+conc_dilutions = ['C', 'D']
+concs_4x = [
+    [1.56, 3.12, 6.24, 12.52, 25, 50],
+    [100, 200, 400, 800, 1600, 2000]
+]
+for dilution, dilution_concs in zip(conc_dilutions, concs_4x):
+    for conc in dilution_concs:
+        pos = dilution + str(dilution_concs.index(conc) + 1)
+        p200.pick_up_tip()
+        p200.transfer(50, ham_f12k_diluent, tubes2[concs_4x.index(dilution)]
+                      .bottom(p200), new_tip='never')
+        p200.mix(3, 50, tubes2[concs_4x.index(dilution)])
+        p200.transfer(25, tubes2[concs_4x.index(dilution)],
+                      tubes1[pos].bottom(p200), mix_after=(3, 50),
+                      new_tip='never')
+        p200.transfer(25, tubes2[concs_4x.index(dilution)],
+                      tubes2[concs_4x.index(dilution) + 1].bottom(p200),
+                      mix_after=(3, 50), new_tip='never')
+        p200.drop_tip()
+
+# Adding thapsigargin to wells
+cell_rows = ['A', 'B', 'C', 'D', 'E', 'F']
+drug_cols = ['1', '2', '3', '4', '5', '6']
+p20.pick_up_tip()
+for col in drug_cols:
+    p20.transfer(10, plate.rows()[0][drug_cols.index(col)].bottom(p20),
+                 plate.rows()[4][drug_cols.index(col)].bottom(p20),
+                 mix_after=(3, 50), new_tip='never')
+    p20.transfer(10, plate.rows()[0][drug_cols.index(col)].bottom(p20),
+                 plate.rows()[5][drug_cols.index(col)].bottom(p20),
+                 mix_after=(3, 50), new_tip='never')
+    for row in cell_rows:
+        p20.transfer(10, tubes2[4], plate[row + col].bottom(p20),
+                     mix_after=(3, 50), new_tip='never')
+    p20.blow_out()
+p20.drop_tip()
+
+# Cell toxic assay
+cell_tox_green = tubes1['B2']
+p20.pick_up_tip()
+for row in plate.rows()[1:]:
+    p20.transfer(15, cell_tox_green, row[0].bottom(p20), new_tip='never')
+    for well in row[1:]:
+        p20.transfer(15, cell_tox_green, well.bottom(p20), mix_after=(3, 50),
+                      new_tip='never')
+    p20.blow_out()
+p20.drop_tip()
+
+robot._hw_manager.hardware.set_temperature(25)
+
+robot._hw_manager.hardware.set_shaker_position(True)
+
+robot._hw_manager.hardware.set_shaker_speed(500)
+
+robot._hw_manager.hardware.set_shaker_resume()
+
+robot.pause("Incubate plate for 15 min (ORBITAL SHAKE + TEMP)")
+
+robot._hw_manager.hardware.set_shaker_pause()
+
+robot._hw_manager.hardware.set_lights(False)
+
+# Cell viability assay
+cell_titer_glo = tubes2['B1']
+p200.pick_up_tip()
+for row in plate.rows()[1:]:
+    p200.transfer(80, cell_titer_glo, row[0].bottom(p200), new_tip='never')
+    for well in row[1:]:
+        p200.transfer(80, cell_titer_glo, well.bottom(p200),
+                      mix_after=(3, 50), new_tip='never')
+    p200.blow_out()
+p200.drop_tip()
+
+robot._hw_manager.hardware.set_temperature(25)
+
+robot._hw_manager.hardware.set_shaker_position(True)
+
+robot._hw_manager.hardware.set_shaker_speed(500)
+
+robot._hw_manager.hardware.set_shaker_resume()
+
+robot.pause("Incubate plate for 10 min (ORBITAL SHAKE + TEMP)")
+
+robot._hw_manager.hardware.set_shaker_pause()
+
+robot._hw_manager.hardware.set_lights(False)

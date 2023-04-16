@@ -1,0 +1,82 @@
+Sure! Here is an example Python script that uses the Opentrons API to perform the experiment you described:
+
+```
+# Import the necessary Opentrons modules
+from opentrons import labware, instruments, robot
+
+# Define the labware
+plate = labware.load('6-well-plate', '1')
+
+# Define the pipettes
+pipette = instruments.P300_Single()
+
+# Define the reagents
+buffer = plate.wells('A1')
+primary_antibody = plate.wells('A2')
+secondary_antibody = plate.wells('A3')
+dapi_stain = plate.wells('A4')
+
+# Define the mixing volumes
+mix_vol = 200  # uL
+buffer_vol = 1000  # uL
+antibody_vol = 500  # uL
+
+# Define the transfer volumes
+primary_vol = 100  # uL
+secondary_vol = 100  # uL
+dapi_vol = 100  # uL
+
+# Define the mixing locations
+mix_locs = [well.bottom() for well in plate.rows('A')]
+
+# Define the transfer locations
+primary_locs = [well.bottom() for well in plate.rows('B')]
+secondary_locs = [well.bottom() for well in plate.rows('C')]
+dapi_locs = [well.bottom() for well in plate.rows('D')]
+
+# Dispense buffer to each well and mix
+pipette.transfer(buffer_vol, buffer, plate.rows('A'))
+pipette.mix(mix_vol, buffer, mix_locs)
+
+# Dispense primary antibody to each well and mix
+pipette.transfer(antibody_vol, primary_antibody, plate.rows('B'))
+pipette.mix(mix_vol, primary_antibody, mix_locs)
+
+# Incubate primary antibody
+robot.comment("Incubating primary antibody for 1 hour")
+robot.pause(minutes=60)
+
+# Dispense secondary antibody to each well and mix
+pipette.transfer(antibody_vol, secondary_antibody, plate.rows('C'))
+pipette.mix(mix_vol, secondary_antibody, mix_locs)
+
+# Incubate secondary antibody
+robot.comment("Incubating secondary antibody for 1 hour")
+robot.pause(minutes=60)
+
+# Dispense DAPI stain to each well and mix
+pipette.transfer(dapi_vol, dapi_stain, plate.rows('D'))
+pipette.mix(mix_vol, dapi_stain, mix_locs)
+
+# Incubate DAPI stain
+robot.comment("Incubating DAPI stain for 30 minutes")
+robot.pause(minutes=30)
+
+# Done!
+robot.comment("Experiment complete!")
+```
+
+This script first defines the labware, pipettes, and reagents that will be used in the experiment. It then defines the volumes of liquid that will be mixed or transferred. The `mix_locs`, `primary_locs`, `secondary_locs`, and `dapi_locs` variables define the locations where the mix, primary antibody, secondary antibody, and DAPI stain will be dispensed, respectively.
+
+The script then uses the pipette to transfer buffer, primary antibody, secondary antibody, and DAPI stain to the appropriate wells in the plate. The pipette is also used to mix the liquids at each step.
+
+After each step, the script pauses to incubate the plate for a specified amount of time. In this case, the primary and secondary antibodies are incubated for 1 hour each, while the DAPI stain is incubated for 30 minutes.
+
+Finally, the script prints a message to the console indicating that the experiment is complete.
+
+Note that this script is just an example and may need to be modified based on the specific details of your experiment. It is always a good idea to thoroughly test any code before using it for an experiment.
+
+
+:*************************
+
+

@@ -1,0 +1,28 @@
+prompt:*************************
+ I got this error: ```python
+Traceback (most recent call last):
+  File "/Users/takashimac/miniforge3/envs/trade/bin/opentrons_simulate", line 8, in <module>
+    sys.exit(main())
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 586, in main
+    runlog, maybe_bundle = simulate(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/simulate.py", line 350, in simulate
+    protocol = parse.parse(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 197, in parse
+    return _parse_python(
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/site-packages/opentrons/protocols/parse.py", line 110, in _parse_python
+    parsed = ast.parse(protocol_contents, filename=ast_filename)
+  File "/Users/takashimac/miniforge3/envs/trade/lib/python3.8/ast.py", line 47, in parse
+    return compile(source, filename, mode, flags,
+  File "./question_and_answer/tmp/tmp_a8facc74-3925-49b0-a496-3d25b617c1c4.py", line 1
+    I am unable to provide an exact solution to the issue without seeing your complete code. However, based on the provided error message, it seems that the problem is related to loading the labware. The error occurs when trying to load the 'opentrons_96_tiprack_200ul' tip rack at line 14 in your code.
+      ^
+SyntaxError: invalid syntax
+
+```, can you fix it? Make sure you only answer Python script. If you don't know how to fix it, say 'I don't know'.
+answer:*************************
+I don't know
+
+
+:*************************
+
+

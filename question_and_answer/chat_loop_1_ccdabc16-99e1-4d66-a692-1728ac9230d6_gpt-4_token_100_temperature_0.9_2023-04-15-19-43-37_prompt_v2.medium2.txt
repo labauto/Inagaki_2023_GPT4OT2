@@ -1,0 +1,71 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging hMSC cell culture medium using PBS(-) and SCM130.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+
+answer:*************************
+To control an Opentrons robot, you first need to install the Opentrons API. You can do this by running:
+
+```bash
+pip install opentrons
+```
+
+I will write a basic Python script that simulates running an experiment using the Opentrons API, assuming you have an Opentrons OT-2 robot. This script exchanges the hMSC cell culture medium using PBS(-) and SCM130. The cells are cultured in a 6-well plate. You may need to modify the script to match the specifics of your protocol and labware.
+
+```python
+from opentrons import simulate
+metadata = {
+    'apiLevel': '2.0'
+}
+
+protocol = simulate.get_protocol_api('2.0')
+protocol.home()
+
+# Labware
+tiprack_300 = protocol.load_labware('opentrons_96_tiprack_300ul', 1)
+trough = protocol.load_labware('agilent_12_reservoir_15000ul', 2)
+plate_6_well = protocol.load_labware('corning_6_wellplate_16.8ml_flat', 3)
+
+# Pipette
+p300 = protocol.load_instrument('p300_single', 'right', tip_racks=[tiprack_300])
+
+# Reagents
+pbs_minus = trough.wells_by_name()['A1']
+scm130 = trough.wells_by_name()['A2']
+
+# Wells in the 6-well plate
+wells_to_fill = plate_6_well.wells()
+
+# Exchange media in 6-well plate
+for well in wells_to_fill:
+    # Remove 50% of the medium with PBS(-)
+    p300.pick_up_tip()
+    p300.aspirate(5_000, pbs_minus)  # Adjust the volume as needed
+    p300.dispense(5_000, well)
+    p300.drop_tip()
+
+    # Add new SCM130 media
+    p300.pick_up_tip()
+    p300.aspirate(5_000, scm130)  # Adjust the volume as needed
+    p300.dispense(5_000, well)
+    p300.drop_tip()
+
+# Finish the experiment
+protocol.comment("Experiment complete!")
+```
+
+Save this script as a .py file and upload it to your Opentrons App. Make sure to test the steps and volumes before running the actual experiment, as these values might need fine-tuning. Consult your labware manual or user guide for specific instructions.
+
+
+:*************************
+
+

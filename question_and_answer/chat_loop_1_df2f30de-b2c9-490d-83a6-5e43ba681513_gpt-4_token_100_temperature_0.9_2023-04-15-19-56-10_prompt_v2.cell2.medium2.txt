@@ -1,0 +1,89 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a Python script that does the following experiment?
+
+Exchanging iPS cell culture medium using PBS(-) and SCM130.
+The cell is cultured in 6 well plate.
+
+
+###
+
+
+    
+answer:*************************
+To use the Opentrons API to control the robot for your experiment, first, make sure you have the Opentrons package installed. You can install it using pip:
+
+```
+pip install opentrons
+```
+
+Next, I have written a Python script for your specific experiment. The script below assumes you are using the OT-2 robot, and you already have a calibrated pipette and labware for the experiment.
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'author': 'Your Name',
+    'description': 'Exchanging iPS cell culture medium using PBS(-) and SCM130',
+    'apiLevel': '2.8'
+}
+
+
+def run(protocol: protocol_api.ProtocolContext):
+
+    # Labware
+    tiprack_200 = protocol.load_labware('opentrons_96_tiprack_300ul', '2')
+    six_well_plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', '3')
+    pbs_tube = protocol.load_labware('opentrons_24_tuberack_nest_2ml_snapcap', '4')
+    scm130_tube = protocol.load_labware('opentrons_24_tuberack_nest_2ml_snapcap', '5')
+
+    # Pipette
+    pipette = protocol.load_instrument('p300_single_gen2', 'right', tip_racks=[tiprack_200])
+
+    # Define reagent positions
+    pbs = pbs_tube.wells_by_name()['A1']
+    scm130 = scm130_tube.wells_by_name()['A1']
+
+    # Variables
+    total_volume = 300  # in uL
+    pbs_scm130_ratio = 0.9  # for 90% PBS(-) and 10% SCM130
+    pbs_volume = total_volume * pbs_scm130_ratio
+    scm130_volume = total_volume - pbs_volume
+    mix_volume = total_volume / 2
+
+    wells = ['A1', 'A3', 'A5', 'B1', 'B3', 'B5']
+
+    for well in wells:
+        dest = six_well_plate.wells_by_name()[well]
+
+        # Aspirate the medium from the well
+        pipette.pick_up_tip()
+        pipette.aspirate(total_volume, dest)
+        pipette.dispense(total_volume, pbs_tube.wells_by_name()['A2'])  # Discard old medium
+        pipette.drop_tip()
+
+        # Transfer PBS(-)
+        pipette.pick_up_tip()
+        pipette.aspirate(pbs_volume, pbs)
+        pipette.dispense(pbs_volume, dest)
+        pipette.mix(3, mix_volume, dest)
+        pipette.drop_tip()
+
+        # Add SCM130
+        pipette.pick_up_tip()
+        pipette.aspirate(scm130_volume, scm130)
+        pipette.dispense(scm130_volume, dest)
+        pipette.mix(3, mix_volume, dest)
+        pipette.drop_tip()
+```
+
+This script will aspirate the cell culture medium, dispense it in a waste tube, and add the appropriate ratio of PBS(-) and SCM130 back to the wells. The script follows a pattern of aspirating the medium, dispensing PBS(-), mixing, dispensing SCM130, and mixing again for each well in the 6 well plate. The well locations are hardcoded in this script, so make sure your labware is in the correct positions.
+
+Please note that you may need to adjust the labware names, positions, or variable values depending on your specific needs and lab setup. Additionally, you should test and calibrate the robot before running any actual experiments to ensure accurate pipetting and labware positioning.
+
+
+:*************************
+
+

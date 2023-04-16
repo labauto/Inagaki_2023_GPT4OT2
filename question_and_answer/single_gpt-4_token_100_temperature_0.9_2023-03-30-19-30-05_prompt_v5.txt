@@ -1,0 +1,104 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well, use 1 ml of PBS(-).
+2. After washing, add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 1 mL of cell culture medium (DMEM) to the 6 well plate.
+4. Finish the experiment.
+
+Possible Labware and Pipettes (Note that you don't need to trust these items, you can use any labware and pipette you want):
+1. `opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical`
+2. `p1000_single`
+3. `corning_6_wellplate_16.8ml_flat`
+
+When writing scripts, be aware of the following:
+1. Do not aspirate more than pipette's max volume. For example, if you want to aspirate 2000 µL with a p1000_single, you need to split it into two commands.
+2. Check the number of tips you use to avoid running out of tips.
+3. when load_labware('name', slot), you can't declare the same slot twice, you need to use different slots for different labware.
+
+Mmake sure that if the code is long, split the code into multiple tiny functions and use it later in the main function. Ideally, split the experiment into multiple steps, and for each step, write a function that does the step. And then, call the function in the main function.
+
+
+
+###
+
+
+
+answer:*************************
+You can use the following Python script to control your Opentrons machine for automating the described laboratory experiment. The code is organized into different functions, each addressing one step of the protocol.
+
+```python
+from opentrons import protocol_api
+
+metadata = {
+    'apiLevel': '2.11'
+}
+
+def wash_with_pbs(protocol):
+    p1000 = protocol.load_instrument('p1000_single', 'left')
+    p1000_tips = protocol.load_labware('opentrons_96_tiprack_1000ul', 2)
+    p1000.pick_up_tip(p1000_tips['A1'])
+    
+    pbs_tube = protocol.load_labware('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', 1)
+    pbs = pbs_tube['A1']
+    
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', 3)
+
+    for well in plate:
+        for _ in range(5):
+            p1000.aspirate(1000, pbs)
+            p1000.dispense(1000, well)
+            
+    p1000.drop_tip()
+
+def add_trypsin(protocol):
+    p1000 = protocol.load_instrument('p1000_single', 'left')
+    p1000_tips = protocol.load_labware('opentrons_96_tiprack_1000ul', 2)
+    p1000.pick_up_tip(p1000_tips['B1'])
+    
+    trypsin_tube = protocol.load_labware('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', 1)
+    trypsin = trypsin_tube['A2']
+    
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', 3)
+
+    for well in plate:
+        p1000.aspirate(1000, trypsin)
+        p1000.dispense(1000, well)
+            
+    p1000.drop_tip()
+
+def add_dmem(protocol):
+    p1000 = protocol.load_instrument('p1000_single', 'left')
+    p1000_tips = protocol.load_labware('opentrons_96_tiprack_1000ul', 2)
+    p1000.pick_up_tip(p1000_tips['C1'])
+    
+    dmem_tube = protocol.load_labware('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', 1)
+    dmem = dmem_tube['A3']
+    
+    plate = protocol.load_labware('corning_6_wellplate_16.8ml_flat', 3)
+
+    for well in plate:
+        p1000.aspirate(1000, dmem)
+        p1000.dispense(1000, well)
+            
+    p1000.drop_tip()
+
+def run(protocol: protocol_api.ProtocolContext):
+    wash_with_pbs(protocol)
+    protocol.delay(minutes=5)
+    add_trypsin(protocol)
+    protocol.delay(minutes=5)
+    add_dmem(protocol)
+    protocol.comment("Experiment finished!")
+```
+
+This script automates the experiment by performing the washing step with PBS(-), adding trypsin solution, waiting for 5 minutes, adding DMEM, and finishing the experiment. You can upload and run this script in the Opentrons App to execute the experiment.
+
+
+:*************************
+
+

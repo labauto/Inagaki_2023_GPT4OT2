@@ -1,0 +1,159 @@
+Sure! Here is the Python script for running the experiment you described. Please note that this script only includes the steps for operating the Opentrons machine, and assumes that the necessary reagents and equipment are already in place.
+
+```
+# Labware setup
+tube_rack_15 = labware.load('opentrons-tuberack-15_50ml_conical', '6')
+tube_rack_10 = labware.load('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '7')
+tc_plate = labware.load('96-PCR-flat', '1')
+tiprack_20 = labware.load('tiprack-20ul', '10')
+tiprack_200 = labware.load('opentrons-tiprack-300ul', '4')
+trash = labware.load('trash-box', '12')
+
+# Reagent setup
+medium = tube_rack_15.wells('A1')
+control_cells = tc_plate.wells('A5', 'B5', 'C5')
+drug_0p39nM = tc_plate.wells('D4', 'E4', 'F4')
+drug_500nM = tc_plate.wells('D8', 'E8', 'F8')
+medium_control = tc_plate.wells('A6', 'B6', 'C6')
+
+# Prepare dilutions of various concentrations of thapsigargin in 10% Ham’s F12K medium (4X concentrations)
+# Prepare initial stocks of thapsigargin
+thap_stock_1mM = tube_rack_10.wells('A1')
+thap_stock_100uM = tube_rack_10.wells('A2')
+thap_stock_10uM = tube_rack_10.wells('A3')
+thap_stock_1uM = tube_rack_10.wells('A4')
+thap_stock_100nM = tube_rack_10.wells('A5')
+thap_stock_50nM = tube_rack_10.wells('A6')
+thap_stock_10nM = tube_rack_10.wells('B1')
+
+# Prepare 4x working concentrations of thapsigargin in tubes C1 to C6 and D1 to D6
+# C1 to C6
+thap_conc_4x_c1 = tube_rack_10.wells('C1')
+thap_conc_4x_c2 = tube_rack_10.wells('C2')
+thap_conc_4x_c3 = tube_rack_10.wells('C3')
+thap_conc_4x_c4 = tube_rack_10.wells('C4')
+thap_conc_4x_c5 = tube_rack_10.wells('C5')
+thap_conc_4x_c6 = tube_rack_10.wells('C6')
+# D1 to D6
+thap_conc_4x_d1 = tube_rack_10.wells('D1')
+thap_conc_4x_d2 = tube_rack_10.wells('D2')
+thap_conc_4x_d3 = tube_rack_10.wells('D3')
+thap_conc_4x_d4 = tube_rack_10.wells('D4')
+thap_conc_4x_d5 = tube_rack_10.wells('D5')
+thap_conc_4x_d6 = tube_rack_10.wells('D6')
+
+# Prepare 2x working concentrations of thapsigargin
+thap_conc_2x_c1 = tc_plate.wells('C1')
+thap_conc_2x_c3 = tc_plate.wells('C3')
+thap_conc_2x_c5 = tc_plate.wells('C5')
+thap_conc_2x_d1 = tc_plate.wells('D1')
+thap_conc_2x_d2 = tc_plate.wells('D2')
+thap_conc_2x_d3 = tc_plate.wells('D3')
+thap_conc_2x_d4 = tc_plate.wells('D4')
+thap_conc_2x_d5 = tc_plate.wells('D5')
+thap_conc_2x_d6 = tc_plate.wells('D6')
+
+# Add cells to 96 well plate and negative controls
+cell_vol = 60  # in microliters
+cell_num = 8000
+tc_plate_vol_cells = cell_vol * 10  # dispense in 10 tubes
+tube_rack_15.wells('A3').do_protocol('mix', volume=tc_plate_vol_cells)  # may use pipette to mix
+pipette_10 = instruments.P10_Single(
+    mount='right',
+    tip_racks=[tiprack_20],
+    trash_container=trash
+)
+pipette_10.distribute(
+    cell_vol,
+    medium,
+    [t.top() for t in tube_rack_15.wells()[:10]],  # mix well
+    blow_out=True
+)
+pipette_10.transfer(
+    cell_num,
+    tube_rack_15.wells('A3'),
+    [t.top() for t in tube_rack_15.wells()[:10]],  # mix well
+    blow_out=True
+)
+pipette_10.transfer(
+    cell_vol,
+    medium,
+    tc_plate.wells('A5', 'B5', 'C5'),
+    blow_out=True
+)
+
+# Add thapsigargin to the 96 well plate
+pipette_300 = instruments.P300_Single(
+    mount='left',
+    tip_racks=[tiprack_200],
+    trash_container=trash
+)
+
+# Prepare initial stocks of thapsigargin
+pipette_10.transfer(
+    35,
+    thap_stock_1mM,
+    tube_rack_10.wells('C1'),
+    blow_out=True
+)
+pipette_10.transfer(
+    35,
+    thap_stock_100uM,
+    tube_rack_10.wells('C2'),
+    blow_out=True
+)
+pipette_10.transfer(
+    35,
+    thap_stock_10uM,
+    tube_rack_10.wells('C3'),
+    blow_out=True
+)
+pipette_10.transfer(
+    35,
+    thap_stock_1uM,
+    tube_rack_10.wells('C4'),
+    blow_out=True
+)
+pipette_10.transfer(
+    35,
+    thap_stock_100nM,
+    tube_rack_10.wells('C5'),
+    blow_out=True
+)
+pipette_10.transfer(
+    35,
+    thap_stock_50nM,
+    tube_rack_10.wells('C6'),
+    blow_out=True
+)
+pipette_10.transfer(
+    35,
+    thap_stock_10nM,
+    tube_rack_10.wells('D1'),
+    blow_out=True
+)
+
+# Prepare 4x working concentrations of thapsigargin
+pipette_10.transfer(
+    250,
+    medium,
+    [w.top() for w in tc_plate.wells('A1', 'B1', 'C1', 'D1', 'E1', 'F1')],  # negative controls
+    blow_out=True
+)
+thap_conc_4x_c1_vol = 100/1.56  # 1.56nM tube
+thap_conc_4x_c2_vol = 100/3.12  # 3.12nM tube
+thap_conc_4x_c3_vol = 100/6.24  # 6.24nM tube
+thap_conc_4x_c4_vol = 100/12.52  # 12.52nM tube
+thap_conc_4x_c5_vol = 100/25  # 25nM tube
+thap_conc_4x_c6_vol = 100/50  # 50nM tube
+thap_conc_4x_d1_vol = 100/100  # 100nM tube
+thap_conc_4x_d2_vol = 100/200  # 200nM tube
+thap_conc_4x_d3_vol = 100/400  # 400nM tube
+thap_conc_4x_d4_vol = 100/800  # 800nM tube
+thap_conc_4x_d5_vol = 100/1600  # 1600nM tube
+thap_conc_4x
+
+
+:*************************
+
+

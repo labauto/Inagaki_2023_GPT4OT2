@@ -1,0 +1,92 @@
+prompt:*************************
+ 
+I want to write a Python script that runs Opentrons machine. This robot can be used to automate laboratory experiment, and is used by many researchers in biology.
+
+Can you write down a script that does the following experiment?
+
+Protocol Steps:
+1. Wash the 6 well plate with PBS(-) by pipetting up and down 5 times. For each well, use 1 ml of PBS(-).
+2. After washing, add 1 ml of trypsin solution (0.25%) to the cell culture dish and wait for 5 minutes.
+3. Then, add 1 mL of cell culture medium (DMEM) to the 6 well plate.
+4. Finish the experiment.
+
+Possible Labware and Pipettes (Note that you don't need to trust these items, you can use any labware and pipette you want):
+1. `opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical`
+2. `p1000_single`
+3. `corning_6_wellplate_16.8ml_flat`
+
+When writing scripts, be aware of the following:
+1. Do not aspirate more than pipette's max volume. For example, if you want to aspirate 2000 µL with a p1000_single, you need to split it into two commands.
+2. Check the number of tips you use to avoid running out of tips.
+3. when load_labware('name', slot), you can't declare the same slot twice, you need to use different slots for different labware.
+
+
+
+###
+
+
+
+answer:*************************
+Sure, here's a Python script that runs the experiment you described:
+
+```python
+from opentrons import labware, instruments, robot
+
+# Load labware
+tiprack = labware.load('tiprack-1000ul', '4')
+plate = labware.load('corning_6_wellplate_16.8ml_flat', '1')
+trypsin = labware.load('opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical', '2')
+
+# Load pipettes
+pipette = instruments.P1000_Single(mount='left', tip_racks=[tiprack])
+
+# Define reagent locations
+PBS = trypsin.wells('A1')
+trypsin_solution = trypsin.wells('A2')
+cell_culture_medium = trypsin.wells('A3')
+
+# Define volumes
+PBS_volume = 1000 # 1 ml
+trypsin_volume = 1000 # 1 ml
+cell_culture_medium_volume = 1000 # 1 ml
+
+# Wash the 6 well plate with PBS(-)
+for well in plate.wells():
+    # Check if there are enough tips left, if not, pause the robot and ask user to restock the tips
+    if pipette.tip_racks[0].next_tip(1000) is None:
+        robot.pause()
+        print('Please restock tip rack in slot 4 and press resume when ready.')
+    # Aspirate PBS and dispense into each well
+    pipette.pick_up_tip()
+    pipette.aspirate(PBS_volume, PBS)
+    pipette.dispense(PBS_volume, well)
+    pipette.blow_out()
+    pipette.drop_tip()
+
+# Add trypsin solution to the cell culture dish and wait for 5 minutes
+pipette.pick_up_tip()
+pipette.aspirate(trypsin_volume, trypsin_solution)
+pipette.dispense(trypsin_volume, plate.wells('A1','B1','C1','D1','E1','F1'))
+pipette.mix(5, trypsin_volume, plate.wells('A1','B1','C1','D1','E1','F1'))
+pipette.blow_out()
+pipette.drop_tip()
+robot.pause(minutes=5)
+
+# Add cell culture medium to the 6 well plate
+for well in plate.wells():
+    pipette.pick_up_tip()
+    pipette.aspirate(cell_culture_medium_volume, cell_culture_medium)
+    pipette.dispense(cell_culture_medium_volume, well)
+    pipette.blow_out()
+    pipette.drop_tip()
+
+# Finish the experiment
+robot.home()
+```
+
+Note that you will need to customize the script based on your specific setup, such as changing the labware names and slot locations, and adjusting the volumes and timing to fit your needs. You may also need to calibrate the robot before running the script.
+
+
+:*************************
+
+
